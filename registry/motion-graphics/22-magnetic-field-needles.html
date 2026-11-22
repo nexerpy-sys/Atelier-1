@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 22 · Magnetic Field Needles — a lattice of compass needles, each an under-damped torsion spring aligning to the summed dipole field of three draggable poles. Zero dependencies. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Magnetic Field Needles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+canvas#c { cursor:grab; } canvas#c.grab { cursor:grabbing; }
+
+/* === AK v2.2 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint {
+    font-size: 8px !important;
+    letter-spacing: 0.13em !important;
+  }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { bottom: 0.7rem !important; font-size: 7.5px !important; }
+  h1 {
+    left: 0.85rem !important;
+    right: 0.85rem !important;
+    font-size: clamp(1.1rem, 5.2vw, 1.8rem) !important;
+  }
+  .modes, .dock {
+    right: 0.85rem !important;
+    left: 0.85rem !important;
+    bottom: 0.7rem !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+  }
+  .modes button, .dock button {
+    font-size: 7.5px !important;
+    padding: 5px 9px !important;
+    letter-spacing: 0.14em !important;
+  }
+}
+
+</style></head><body>
+<p class="hud"><b>22</b>&nbsp;&nbsp;B = Σ q·r̂ / r² · torsion spring per needle · ζ 0.28</p>
+<canvas id="c" aria-label="A field of compass needles reacting to three magnetic poles"></canvas>
+<p class="hint">Drag a pole · the lattice rings before it settles</p>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => {
+    const c = rgb(v);
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => {
+      if (!P.down) return;
+      P.down = false;
+      if (P.onUp) P.onUp(e);
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+(() => {
+  'use strict';
+  const cv = document.getElementById('c'), S = AK.fit(cv), ctx = S.ctx, P = AK.ptr(cv);
+  const GAP = 24; let cols = 0, rows = 0, ANG, AV, MAG, poles = [], held = null, lw = 0, lh = 0;
+  function init() {
+    cols = Math.ceil(S.W / GAP) + 1; rows = Math.ceil(S.H / GAP) + 1; ANG = new Float32Array(cols * rows); AV = new Float32Array(cols * rows); MAG = new Float32Array(cols * rows);
+    poles = [{ x: S.W * 0.3, y: S.H * 0.45, q: 1, ph: 0 }, { x: S.W * 0.68, y: S.H * 0.38, q: -1, ph: 2 }, { x: S.W * 0.55, y: S.H * 0.72, q: 1, ph: 4 }];
+    poles.forEach((p) => { p.hx = p.x; p.hy = p.y; p.vx = 0; p.vy = 0; });
+  }
+  P.onDown = () => { held = null; let best = 60; for (const p of poles) { const d = Math.hypot(p.x - P.x, p.y - P.y); if (d < best) { best = d; held = p; } } if (held) cv.classList.add('grab'); };
+  P.onUp = () => { if (held) { held.hx = held.x; held.hy = held.y; } held = null; cv.classList.remove('grab'); };
+
+  AK.loop((dt, t) => {
+    if (S.W !== lw || S.H !== lh) { lw = S.W; lh = S.H; init(); }
+    const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
+    for (const p of poles) {
+      const tx = p === held ? P.x : p.hx + Math.sin(t * 0.4 + p.ph) * 34, ty = p === held ? P.y : p.hy + Math.cos(t * 0.31 + p.ph) * 26, k = p === held ? 240 : 14, c = p === held ? 22 : 5;
+      p.vx += ((tx - p.x) * k - p.vx * c) * dt; p.vy += ((ty - p.y) * k - p.vy * c) * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+    }
+    const settle = AK.RM ? 1 : 0;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const k = i + j * cols, x = i * GAP, y = j * GAP; let bx = 0, by = 0;
+      for (const p of poles) { const dx = x - p.x, dy = y - p.y, d2 = dx * dx + dy * dy + 300, inv = p.q / (d2 * Math.sqrt(d2)); bx += dx * inv; by += dy * inv; }
+      const m = Math.hypot(bx, by), want = Math.atan2(by, bx);
+      let diff = want - ANG[k]; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      if (settle) { ANG[k] = want; } else { AV[k] += (diff * 90 - AV[k] * 5.3) * dt; ANG[k] += AV[k] * dt; }
+      MAG[k] = Math.min(1, m * 5200);
+    }
+    ctx.lineCap = 'round';
+    for (let b = 0; b < 3; b++) {
+      ctx.strokeStyle = b === 2 ? AK.rgba('--ink', 0.92) : AK.rgba('--ink', b ? 0.46 : 0.17); ctx.lineWidth = b === 2 ? 1.6 : 1.1; ctx.beginPath();
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+        const k = i + j * cols, m = MAG[k]; if ((m < 0.22 ? 0 : m < 0.6 ? 1 : 2) !== b) continue;
+        const l = 3.5 + m * 7.5, c = Math.cos(ANG[k]) * l, s = Math.sin(ANG[k]) * l, x = i * GAP, y = j * GAP;
+        ctx.moveTo(x - c, y - s); ctx.lineTo(x + c, y + s);
+      }
+      ctx.stroke();
+    }
+    ctx.fillStyle = AK.css('--flame'); ctx.beginPath();
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const k = i + j * cols, m = MAG[k]; if (m < 0.45) continue;
+      const l = 3.5 + m * 7.5, x = i * GAP + Math.cos(ANG[k]) * l, y = j * GAP + Math.sin(ANG[k]) * l;
+      ctx.moveTo(x + 1.6, y); ctx.arc(x, y, 1.6, 0, 6.283);
+    }
+    ctx.fill();
+    for (const p of poles) {
+      const col = p.q > 0 ? '--flame' : '--cyan';
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 90); g.addColorStop(0, AK.rgba(col, 0.3)); g.addColorStop(1, AK.rgba(col, 0));
+      ctx.fillStyle = g; ctx.fillRect(p.x - 90, p.y - 90, 180, 180);
+      ctx.fillStyle = AK.css('--bg'); ctx.strokeStyle = AK.css(col); ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p === held ? 19 : 15, 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p.x - 5, p.y); ctx.lineTo(p.x + 5, p.y); if (p.q > 0) { ctx.moveTo(p.x, p.y - 5); ctx.lineTo(p.x, p.y + 5); } ctx.stroke();
+    }
+  });
+})();
+</script></body></html>

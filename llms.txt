@@ -1,0 +1,83 @@
+# Atelier Kinetik
+
+> Atelier Kinetik is a curated reference of frontend design and implementation
+> resources for developers and AI coding agents. It contains 183 resources in
+> nine categories. It is a static reference site. It is not a website
+> generator, a chatbot, an API or a package registry.
+
+Version: 2.8.0
+
+## What this site provides
+
+- Typefaces: 60 Google Fonts selected for interface and editorial use
+- Font pairings: 24 studio pairings with a role assigned to each face
+- Type scales: 3 fluid typography scales
+- Colour systems: 6 semantic colour systems with colour scales and tokens
+- Motion laws: 12 named rules for duration, easing and spring behaviour
+- Micro-interactions: 24 production interaction patterns
+- Section templates: 8 reusable page sections
+- Canvas FX: 16 effects rendered to a canvas element
+- Computational motion graphics: 30 simulation, solver and shader pieces
+
+## Who it is for
+
+- AI coding agents building or modifying websites
+- Frontend developers, UI/UX designers and creative developers
+
+## Where to start
+
+- llms.txt : this file. Orientation only.
+- registry.json : the primary structured manifest. Every resource is listed
+  here with its category, description and file location. Read this before
+  fetching anything else.
+- index.html : the human-facing homepage with live previews and source inspection.
+- README.md : repository overview and AI implementation principles.
+
+There is no API and no search endpoint. All content is static files.
+
+## How to retrieve a resource
+
+1. Fetch registry.json.
+2. Select the category that matches the task.
+3. Read the entries in that category and choose by description, not by name.
+4. Fetch the file or files listed for the chosen resource.
+5. Read the whole file before using any part of it.
+
+## How to identify dependencies
+
+- Use the dependency information in the registry entry where it is present.
+- Also read the resource file itself: check script tags, import statements
+  and stylesheet links.
+- Some motion resources (26..30) depend on Three.js or GSAP.
+- The showcase homepage uses GSAP, Lenis, Three.js, Tone.js, Matter.js and Prism.js via CDN.
+- Typefaces load from Google Fonts.
+- Do not assume a resource is dependency-free unless its entry and its source
+  both show that.
+
+## How to adapt a resource to an existing project
+
+1. Inspect the target project first: framework, styling method, existing
+   tokens for type, colour, spacing and motion.
+2. Use the target project's tokens. Replace the resource's fonts, colours,
+   radii and durations with the project's own unless the user asked for the
+   resource's look.
+3. Take the smallest part that does the job. Do not import a whole file to
+   use one function or one rule.
+4. Do not add a library the project does not already use without telling the
+   user. If a resource needs Three.js or GSAP, say so before adding it.
+5. Preserve responsive behaviour, focus states, keyboard handling and
+   prefers-reduced-motion handling.
+6. Do not copy preview scaffolding or demo controls into the target project.
+
+## Status and limits
+
+- Resources are references. Some are demonstrations, not hardened production
+  code. Review, test and adjust before shipping.
+- Licensing: Code MIT. Typefaces (OFL via Google Fonts) and third-party
+  libraries remain under their own licences.
+
+## Agentic Build
+
+The homepage includes an animation called Agentic Build. It is a
+choreographed visual demonstration of a website being assembled. It does not
+generate source code and is not an AI system. Do not describe it as one.

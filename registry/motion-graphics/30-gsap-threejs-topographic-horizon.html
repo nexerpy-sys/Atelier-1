@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 30 · Topographic Wireframe Horizon — Three.js 120×120 procedural GLSL contour-isoline terrain with pointer sonar pulse and GSAP-choreographed camera presets (Orbit / Ridge Fly / Zenith). Dependencies: three@0.170.0 + gsap@3.12.5. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Topographic Wireframe Horizon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.modes { position: absolute; right: 1.25rem; bottom: 0.9rem; z-index: 4; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.modes button {
+  font: inherit; font-size: 8.5px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); background: color-mix(in srgb, var(--bg) 74%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong); border-radius: 99px; padding: 6px 12px;
+  cursor: pointer; transition: color 0.25s, border-color 0.25s, background-color 0.25s, transform 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+.modes button:hover { color: var(--ink); border-color: var(--ink); }
+.modes button:active { transform: scale(0.94); }
+.modes button[aria-pressed="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+.hint { left: 1.25rem; transform: none; }
+
+/* === AK v2.3 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint { font-size: 8px !important; letter-spacing: 0.13em !important; }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { display: none !important; }
+  h1 { left: 0.85rem !important; right: 0.85rem !important; bottom: 3.45rem !important; font-size: clamp(1.1rem, 5vw, 1.8rem) !important; }
+  .modes { right: 0.85rem !important; left: 0.85rem !important; bottom: 0.7rem !important; justify-content: flex-start !important; gap: 5px !important; }
+  .modes button { font-size: 7.5px !important; padding: 5px 9px !important; letter-spacing: 0.14em !important; }
+}
+
+</style></head><body>
+<p class="hud"><b>30</b>&nbsp;&nbsp;Three.js + GSAP · GLSL isolines · choreographed camera</p>
+<p class="read" id="read">CAM ORBIT</p>
+<canvas id="c" aria-label="Interactive 3D topographic isoline terrain with GSAP camera presets"></canvas>
+<p class="hint">Click terrain for a sonar pulse · switch camera views</p>
+<div class="modes" role="group" aria-label="Camera preset">
+  <button type="button" data-c="orbit" aria-pressed="true">Orbit</button>
+  <button type="button" data-c="ridge" aria-pressed="false">Ridge Fly</button>
+  <button type="button" data-c="zenith" aria-pressed="false">Zenith</button>
+</div>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => { const c = rgb(v); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      if (ctx) ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => { if (!P.down) return; P.down = false; if (P.onUp) P.onUp(e); };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+</script>
+<script type="module">
+const cv = document.getElementById('c'), read = document.getElementById('read'), P = AK.ptr(cv);
+let onCam = null, pulseT = 10;
+P.onDown = () => { pulseT = 0; };
+document.querySelectorAll('.modes button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.modes button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  read.textContent = 'CAM ' + b.textContent.toUpperCase();
+  if (onCam) onCam(b.dataset.c);
+}));
+
+function startFallback() {
+  const S = AK.fit(cv), ctx = S.ctx;
+  AK.loop((dt, t) => {
+    ctx.clearRect(0, 0, S.W, S.H);
+    const rows = 22;
+    for (let r = 0; r < rows; r++) {
+      const y0 = S.H * (0.2 + (r / rows) * 0.68);
+      ctx.strokeStyle = r % 5 === 0 ? AK.rgba('--flame', 0.8) : AK.rgba('--ink', 0.28);
+      ctx.lineWidth = r % 5 === 0 ? 1.4 : 0.9;
+      ctx.beginPath();
+      for (let x = 0; x <= S.W; x += 12) {
+        const y = y0 - Math.sin(x * 0.012 + r * 0.4 + t) * 18 - Math.cos(x * 0.025 - r * 0.3) * 10;
+        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+  });
+}
+
+try {
+  const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js');
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  const camRig = { x: 0, y: 3.1, z: 5.6, fov: 42, lookY: -0.2 };
+  camera.position.set(camRig.x, camRig.y, camRig.z);
+
+  const uniforms = {
+    uTime: { value: 0 },
+    uPulse: { value: 10 },
+    uBg: { value: new THREE.Color('#070709') },
+    uFlame: { value: new THREE.Color('#ff3d00') },
+    uGold: { value: new THREE.Color('#e5a93c') },
+    uInk: { value: new THREE.Color('#f4f2ec') }
+  };
+
+  const VS = `
+uniform float uTime, uPulse;
+varying float vH, vRad;
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p){
+  vec2 i = floor(p), f = fract(p), u = f*f*(3.0 - 2.0*f);
+  return mix(mix(hash(i), hash(i+vec2(1.,0.)), u.x), mix(hash(i+vec2(0.,1.)), hash(i+vec2(1.,1.)), u.x), u.y);
+}
+float fbm(vec2 p){
+  float v = 0.0, a = 0.55;
+  for(int i=0;i<4;i++){ v += a * noise(p); p *= 2.04; a *= 0.48; }
+  return v;
+}
+void main(){
+  vec3 p = position;
+  float h = fbm(p.xz * 0.42 + vec2(uTime * 0.12, -uTime * 0.08)) * 1.85 - 0.65;
+  float r = length(p.xz);
+  float sonar = exp(-pow((r - uPulse * 2.6) * 2.4, 2.0)) * 0.38 * exp(-uPulse * 0.6);
+  p.y += h + sonar;
+  vH = h + sonar;
+  vRad = r;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+}`;
+
+  const FS = `
+uniform vec3 uBg, uFlame, uGold, uInk;
+varying float vH, vRad;
+void main(){
+  float iso = abs(fract(vH * 7.5) - 0.5);
+  float line = 1.0 - smoothstep(0.02, 0.095, iso);
+  float major = 1.0 - smoothstep(0.02, 0.08, abs(fract(vH * 1.5) - 0.5));
+  float fade = smoothstep(5.4, 1.8, vRad);
+  vec3 col = mix(uBg, uInk, line * 0.42 * fade);
+  col = mix(col, uGold, major * 0.55 * fade);
+  col += uFlame * smoothstep(0.45, 1.05, vH) * (0.35 + line * 0.95) * fade;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+  const geo = new THREE.PlaneGeometry(10.5, 10.5, 120, 120);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms });
+  const terrain = new THREE.Mesh(geo, mat);
+  scene.add(terrain);
+
+  const PRESETS = {
+    orbit: { x: 0, y: 3.1, z: 5.6, fov: 42, lookY: -0.2 },
+    ridge: { x: 2.6, y: 1.35, z: 3.4, fov: 50, lookY: 0.15 },
+    zenith: { x: 0, y: 6.4, z: 0.65, fov: 40, lookY: 0 }
+  };
+  onCam = (name) => {
+    const t = PRESETS[name] || PRESETS.orbit;
+    if (!AK.RM && typeof window.gsap !== 'undefined') {
+      gsap.to(camRig, { ...t, duration: 1.35, ease: 'power4.inOut', overwrite: true });
+    } else {
+      Object.assign(camRig, t);
+    }
+  };
+
+  const syncTheme = () => {
+    scene.background = new THREE.Color(AK.css('--bg'));
+    uniforms.uBg.value.set(AK.css('--bg'));
+    uniforms.uFlame.value.set(AK.css('--flame'));
+    uniforms.uGold.value.set(AK.css('--gold'));
+    uniforms.uInk.value.set(AK.css('--ink'));
+  };
+  syncTheme(); AK.onTheme(syncTheme);
+
+  const resize = () => {
+    const w = Math.max(1, cv.clientWidth), h = Math.max(1, cv.clientHeight);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  };
+  resize();
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+
+  const tick = (dt, t) => {
+    pulseT = Math.min(10, pulseT + dt);
+    uniforms.uTime.value = t;
+    uniforms.uPulse.value = pulseT;
+    const sway = P.in ? (P.x / Math.max(1, cv.clientWidth) - 0.5) * 1.1 : Math.sin(t * 0.25) * 0.45;
+    camera.position.set(camRig.x + sway, camRig.y, camRig.z);
+    if (Math.abs(camera.fov - camRig.fov) > 0.01) { camera.fov = camRig.fov; camera.updateProjectionMatrix(); }
+    camera.lookAt(0, camRig.lookY, 0);
+    renderer.render(scene, camera);
+  };
+  if (AK.RM) { tick(0.016, 1.2); }
+  else { AK.loop(tick); }
+} catch (_) {
+  startFallback();
+}
+</script></body></html>

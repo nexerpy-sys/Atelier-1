@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 26 · Ferrofluid Obsidian Monolith — Three.js + custom GLSL 3D simplex-noise vertex displacement with magnetic pointer pole attraction, Fresnel flame rim light and brass orbital calipers. Dependency: three@0.170.0 (with offline Canvas2D fallback). -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Ferrofluid Obsidian Monolith</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.modes { position: absolute; right: 1.25rem; bottom: 0.9rem; z-index: 4; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.modes button {
+  font: inherit; font-size: 8.5px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); background: color-mix(in srgb, var(--bg) 74%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong); border-radius: 99px; padding: 6px 12px;
+  cursor: pointer; transition: color 0.25s, border-color 0.25s, background-color 0.25s, transform 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+.modes button:hover { color: var(--ink); border-color: var(--ink); }
+.modes button:active { transform: scale(0.94); }
+.modes button[aria-pressed="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+canvas#c { cursor: grab; } canvas#c.grab { cursor: grabbing; }
+.hint { left: 1.25rem; transform: none; }
+h1 {
+  position: absolute; left: 1.25rem; bottom: 2.55rem; z-index: 2; pointer-events: none;
+  font-family: "Syne", sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: -0.03em;
+  font-size: clamp(1.2rem, 3.8vw, 2.5rem); line-height: 0.94; color: var(--ink);
+}
+h1 span { display: block; font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--flame); }
+
+/* === AK v2.3 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint { font-size: 8px !important; letter-spacing: 0.13em !important; }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { display: none !important; }
+  h1 { left: 0.85rem !important; right: 0.85rem !important; bottom: 3.45rem !important; font-size: clamp(1.1rem, 5vw, 1.8rem) !important; }
+  .modes { right: 0.85rem !important; left: 0.85rem !important; bottom: 0.7rem !important; justify-content: flex-start !important; gap: 5px !important; }
+  .modes button { font-size: 7.5px !important; padding: 5px 9px !important; letter-spacing: 0.14em !important; }
+}
+
+</style></head><body>
+<p class="hud"><b>26</b>&nbsp;&nbsp;Three.js · GLSL ferrofluid · magnetic pole + Fresnel⁴</p>
+<p class="read" id="read">B-field 1.00 T</p>
+<canvas id="c" aria-label="Interactive 3D ferrofluid obsidian sculpture reacting to magnetic pointer"></canvas>
+<h1>Ferro<span>fluid.</span></h1>
+<p class="hint">Move to pull spikes · click for a magnetic surge</p>
+<div class="modes" role="group" aria-label="Ferrofluid regime">
+  <button type="button" data-f="1.8" data-a="0.28" aria-pressed="true">Spikes</button>
+  <button type="button" data-f="0.95" data-a="0.34" aria-pressed="false">Lobes</button>
+  <button type="button" data-f="3.1" data-a="0.18" aria-pressed="false">Ripple</button>
+</div>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => { const c = rgb(v); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      if (ctx) ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => { if (!P.down) return; P.down = false; if (P.onUp) P.onUp(e); };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+</script>
+<script type="module">
+const cv = document.getElementById('c'), read = document.getElementById('read'), P = AK.ptr(cv);
+let freq = 1.8, amp = 0.28, surge = 0;
+document.querySelectorAll('.modes button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.modes button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  freq = +b.dataset.f; amp = +b.dataset.a; surge = 0.7;
+}));
+P.onDown = () => { surge = 1.15; cv.classList.add('grab'); };
+P.onUp = () => cv.classList.remove('grab');
+
+function startFallback() {
+  const S = AK.fit(cv), ctx = S.ctx;
+  AK.loop((dt, t) => {
+    const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
+    surge *= Math.exp(-3.2 * dt);
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.25;
+    const mx = P.in ? (P.x - cx) / R : Math.cos(t * 0.7) * 0.6;
+    const my = P.in ? (P.y - cy) / R : Math.sin(t * 0.5) * 0.5;
+    ctx.beginPath();
+    const N = 128;
+    for (let i = 0; i <= N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      const pull = Math.max(0, Math.cos(a) * mx + Math.sin(a) * my);
+      const r = R * (1 + (amp * 0.5 + surge * 0.14) * Math.sin(a * (6 + freq * 3) + t * 2.4) * (0.4 + pull * 0.9));
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+    const g = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R * 1.35);
+    g.addColorStop(0, AK.rgba('--ink', 0.25));
+    g.addColorStop(0.55, AK.css('--surface'));
+    g.addColorStop(1, AK.rgba('--flame', 0.85));
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = AK.rgba('--flame', 0.65); ctx.lineWidth = 1.4; ctx.stroke();
+    read.textContent = 'B-field ' + (1 + surge * 1.4).toFixed(2) + ' T';
+  });
+}
+
+try {
+  const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js');
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+  camera.position.set(0, 0.15, 4.35);
+
+  const VS = `
+uniform float uTime, uFreq, uAmp, uSurge;
+uniform vec3 uPole;
+varying vec3 vNormal, vViewDir;
+varying float vDisp;
+vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+float snoise(vec3 v){
+  const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+  const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+  vec3 i = floor(v + dot(v, C.yyy)), x0 = v - i + dot(i, C.xxx);
+  vec3 g = step(x0.yzx, x0.xyz), l = 1.0 - g;
+  vec3 i1 = min(g.xyz, l.zxy), i2 = max(g.xyz, l.zxy);
+  vec3 x1 = x0 - i1 + C.xxx, x2 = x0 - i2 + C.yyy, x3 = x0 - D.yyy;
+  i = mod(i, 289.0);
+  vec4 p = permute(permute(permute(i.z + vec4(0.0, i1.z, i2.z, 1.0)) + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+  float n_ = 1.0/7.0; vec3 ns = n_ * D.wyz - D.xzx;
+  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+  vec4 x_ = floor(j * ns.z), y_ = floor(j - 7.0 * x_);
+  vec4 x = x_ * ns.x + ns.yyyy, y = y_ * ns.x + ns.yyyy;
+  vec4 h = 1.0 - abs(x) - abs(y);
+  vec4 b0 = vec4(x.xy, y.xy), b1 = vec4(x.zw, y.zw);
+  vec4 s0 = floor(b0)*2.0 + 1.0, s1 = floor(b1)*2.0 + 1.0;
+  vec4 sh = -step(h, vec4(0.0));
+  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy, a1 = b1.xzyw + s1.xzyw*sh.zzww;
+  vec3 p0 = vec3(a0.xy, h.x), p1 = vec3(a0.zw, h.y), p2 = vec3(a1.xy, h.z), p3 = vec3(a1.zw, h.w);
+  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+  m = m * m;
+  return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+}
+float dispAt(vec3 p){
+  float pole = pow(max(0.0, dot(normalize(p), normalize(uPole))), 3.0);
+  float n1 = snoise(p * uFreq + vec3(uTime * 0.45, -uTime * 0.35, uTime * 0.25));
+  float n2 = snoise(p * (uFreq * 2.15) - vec3(uTime * 0.65));
+  float spike = pow(abs(n1), 1.65) * sign(n1) + 0.32 * n2;
+  return (spike * (uAmp + uSurge * 0.16)) * (0.65 + pole * 1.15) + pole * (0.14 + uSurge * 0.12);
+}
+void main(){
+  vec3 p = position;
+  float d = dispAt(p);
+  vec3 displaced = p + normal * d;
+  vec3 t1 = normalize(abs(normal.y) < 0.99 ? cross(normal, vec3(0.0,1.0,0.0)) : cross(normal, vec3(1.0,0.0,0.0)));
+  vec3 t2 = cross(normal, t1);
+  float eps = 0.025;
+  vec3 pA = normalize(p + t1 * eps); pA += pA * dispAt(pA);
+  vec3 pB = normalize(p + t2 * eps); pB += pB * dispAt(pB);
+  vec3 calcN = normalize(cross(pA - displaced, pB - displaced));
+  if (dot(calcN, normal) < 0.0) calcN = -calcN;
+  vNormal = normalize(normalMatrix * calcN);
+  vec4 mv = modelViewMatrix * vec4(displaced, 1.0);
+  vViewDir = normalize(-mv.xyz);
+  vDisp = d;
+  gl_Position = projectionMatrix * mv;
+}`;
+
+  const FS = `
+uniform vec3 uBg, uFlame, uGold, uInk;
+varying vec3 vNormal, vViewDir;
+varying float vDisp;
+void main(){
+  vec3 n = normalize(vNormal), v = normalize(vViewDir);
+  vec3 l1 = normalize(vec3(-0.6, 0.85, 0.65));
+  vec3 l2 = normalize(vec3(0.8, -0.5, 0.35));
+  float dif = max(dot(n, l1), 0.0);
+  float spec1 = pow(max(dot(reflect(-l1, n), v), 0.0), 72.0);
+  float spec2 = pow(max(dot(reflect(-l2, n), v), 0.0), 28.0);
+  float fre = pow(1.0 - max(dot(n, v), 0.0), 3.6);
+  vec3 r = reflect(-v, n);
+  float studioStrip = smoothstep(0.65, 0.92, r.y) * smoothstep(0.55, 0.08, abs(r.x));
+  vec3 base = mix(uBg * 0.45, uBg + vec3(0.085), dif);
+  vec3 col = base + uFlame * (fre * 1.45 + max(0.0, vDisp) * 0.55);
+  col += uGold * (spec2 * 0.45 + fre * 0.25);
+  col += uInk * (spec1 * 1.05 + studioStrip * 0.28);
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+  const uniforms = {
+    uTime: { value: 0 },
+    uFreq: { value: freq },
+    uAmp: { value: amp },
+    uSurge: { value: 0 },
+    uPole: { value: new THREE.Vector3(0.5, 0.4, 1.0) },
+    uBg: { value: new THREE.Color('#070709') },
+    uFlame: { value: new THREE.Color('#ff3d00') },
+    uGold: { value: new THREE.Color('#e5a93c') },
+    uInk: { value: new THREE.Color('#f4f2ec') }
+  };
+
+  const geo = new THREE.IcosahedronGeometry(1.12, 64);
+  const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms });
+  const blob = new THREE.Mesh(geo, mat);
+  scene.add(blob);
+
+  const ringGeo = new THREE.TorusGeometry(1.78, 0.0045, 8, 120);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xe5a93c, transparent: true, opacity: 0.34 });
+  const ring1 = new THREE.Mesh(ringGeo, ringMat);
+  ring1.rotation.set(1.15, 0.35, 0);
+  const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.98, 0.003, 8, 120), new THREE.MeshBasicMaterial({ color: 0xf4f2ec, transparent: true, opacity: 0.16 }));
+  ring2.rotation.set(-0.85, 0.65, 0.3);
+  scene.add(ring1, ring2);
+
+  const syncTheme = () => {
+    const bg = AK.css('--bg'), fl = AK.css('--flame'), gd = AK.css('--gold'), ik = AK.css('--ink');
+    scene.background = new THREE.Color(bg);
+    uniforms.uBg.value.set(bg);
+    uniforms.uFlame.value.set(fl);
+    uniforms.uGold.value.set(gd);
+    uniforms.uInk.value.set(ik);
+    ringMat.color.set(gd);
+    ring2.material.color.set(ik);
+  };
+  syncTheme(); AK.onTheme(syncTheme);
+
+  const resize = () => {
+    const w = Math.max(1, cv.clientWidth), h = Math.max(1, cv.clientHeight);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  };
+  resize();
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+
+  let px = 0.3, py = 0.2;
+  const renderOnce = (dt, t) => {
+    surge *= Math.exp(-3.4 * dt);
+    const tx = P.in ? (P.x / Math.max(1, cv.clientWidth) * 2 - 1) * 1.4 : Math.sin(t * 0.55) * 0.8;
+    const ty = P.in ? -(P.y / Math.max(1, cv.clientHeight) * 2 - 1) * 1.2 : Math.cos(t * 0.42) * 0.6;
+    px += (tx - px) * Math.min(1, dt * 6);
+    py += (ty - py) * Math.min(1, dt * 6);
+    uniforms.uTime.value = t;
+    uniforms.uFreq.value += (freq - uniforms.uFreq.value) * Math.min(1, dt * 6);
+    uniforms.uAmp.value += (amp - uniforms.uAmp.value) * Math.min(1, dt * 6);
+    uniforms.uSurge.value = surge;
+    uniforms.uPole.value.set(px, py, 1.1);
+    blob.rotation.y = t * 0.16 + px * 0.28;
+    blob.rotation.x = py * 0.22;
+    ring1.rotation.z = t * 0.18;
+    ring2.rotation.z = -t * 0.11;
+    renderer.render(scene, camera);
+    read.textContent = 'B-field ' + (1.0 + surge * 1.6 + Math.hypot(px, py) * 0.35).toFixed(2) + ' T';
+  };
+  if (AK.RM) { renderOnce(0.016, 1.4); }
+  else { AK.loop(renderOnce); }
+} catch (_) {
+  startFallback();
+}
+</script></body></html>

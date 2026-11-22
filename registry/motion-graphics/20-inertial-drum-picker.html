@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 20 · Inertial Drum Picker — 3D cylinder list with flick momentum, exponential friction, rubber-band bounds and a critically-tuned snap spring. Zero dependencies. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Inertial Drum Picker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+body { display:grid; grid-template-columns:1.1fr 1fr; align-items:center; }
+#drum { position:relative; height:100%; perspective:900px; overflow:hidden; cursor:grab; touch-action:none; outline:none; user-select:none;
+  -webkit-mask-image:linear-gradient(transparent, #000 26%, #000 74%, transparent); mask-image:linear-gradient(transparent, #000 26%, #000 74%, transparent); }
+#drum.drag { cursor:grabbing; }
+#drum:focus-visible .band { border-color:var(--flame); }
+.it { position:absolute; left:0; right:0; top:50%; height:54px; margin-top:-27px; display:flex; align-items:center; justify-content:center; gap:14px;
+  font-family:"Syne",sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:-.02em; font-size:clamp(1.15rem,3.6vw,2.1rem); color:var(--ink);
+  backface-visibility:hidden; will-change:transform,opacity; white-space:nowrap; }
+.it i { font:500 9px "JetBrains Mono",monospace; letter-spacing:.2em; color:var(--muted); font-style:normal; }
+.band { position:absolute; left:8%; right:8%; top:50%; height:58px; margin-top:-29px; border-top:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); pointer-events:none; transition:border-color .3s; }
+.band::before { content:""; position:absolute; left:-3px; top:50%; width:6px; height:6px; margin-top:-3px; border-radius:50%; background:var(--flame); }
+.out { padding:0 1.5rem 0 .5rem; border-left:1px solid var(--line); height:56%; display:flex; flex-direction:column; justify-content:center; gap:14px; min-width:0; }
+.out small { font-size:8.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); padding-left:1rem; }
+.out code { font:500 clamp(10px,1.7vw,13px) "JetBrains Mono",monospace; color:var(--gold); padding-left:1rem; word-break:break-word; }
+.out em { font-family:"Instrument Serif",serif; font-size:clamp(1.1rem,3vw,1.9rem); line-height:1.1; color:var(--ink); padding-left:1rem; }
+.track { margin-left:1rem; height:2px; background:var(--line); position:relative; }
+.track span { position:absolute; left:0; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--flame); }
+@media (max-width:560px) { body { grid-template-columns:1fr; grid-template-rows:1.3fr 1fr; } .out { border-left:0; border-top:1px solid var(--line); height:auto; padding:1rem; } }
+
+/* === AK v2.2 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint {
+    font-size: 8px !important;
+    letter-spacing: 0.13em !important;
+  }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { bottom: 0.7rem !important; font-size: 7.5px !important; }
+  h1 {
+    left: 0.85rem !important;
+    right: 0.85rem !important;
+    font-size: clamp(1.1rem, 5.2vw, 1.8rem) !important;
+  }
+  .modes, .dock {
+    right: 0.85rem !important;
+    left: 0.85rem !important;
+    bottom: 0.7rem !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+  }
+  .modes button, .dock button {
+    font-size: 7.5px !important;
+    padding: 5px 9px !important;
+    letter-spacing: 0.14em !important;
+  }
+}
+
+</style></head><body>
+<p class="hud"><b>20</b>&nbsp;&nbsp;Flick momentum · e^(−3.4t) friction · snap spring 190 / 24</p>
+<div id="drum" tabindex="0" role="listbox" aria-label="Motion law picker — drag, scroll or use arrow keys"><div class="band"></div></div>
+<div class="out"><small id="idx">01 / 12</small><em id="use">Entrances</em><code id="bez">cubic-bezier(0.16, 1, 0.3, 1)</code><div class="track"><span id="ball"></span></div></div>
+<p class="hint">Flick · scroll · arrow keys</p>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => {
+    const c = rgb(v);
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => {
+      if (!P.down) return;
+      P.down = false;
+      if (P.onUp) P.onUp(e);
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+(() => {
+  'use strict';
+  const LAWS = [['Kinetic snap', '0.16, 1, 0.3, 1', 'Entrances'], ['Celestial drift', '0.33, 1, 0.68, 1', 'Text reveals'], ['Velocity whip', '0.22, 1, 0.36, 1', 'Magnetic & drawers'],
+    ['Obsidian settle', '0.5, 1, 0.89, 1', 'Dark surfaces'], ['Editorial ease', '0.25, 1, 0.5, 1', 'Cross-fades'], ['Chronos cortege', '0.76, 0, 0.24, 1', 'Media handoffs'],
+    ['Daedalus rule', '0.65, 0, 0.35, 1', 'Hairline exits'], ['Hephaestus overshoot', '0.34, 1.56, 0.64, 1', 'Controls'], ['Meridian glide', '0.2, 0.8, 0.2, 1', 'Nav chrome'],
+    ['Glacier drift', '0.4, 0, 0.2, 1', 'Ambient loops'], ['Nova burst', '0.34, 1.3, 0.64, 1', 'Micro-feedback'], ['Umbra sink', '0.55, 0, 1, 0.45', 'Exits']];
+  const drum = document.getElementById('drum'), ITEM = 54, STEP = 19, RAD = ITEM / 2 / Math.tan(STEP * Math.PI / 360);
+  const els = LAWS.map((l, i) => { const d = document.createElement('div'); d.className = 'it'; d.setAttribute('role', 'option'); d.innerHTML = `<i>${String(i + 1).padStart(2, '0')}</i>${l[0]}`; drum.appendChild(d); return d; });
+  const $ = (id) => document.getElementById(id), ball = $('ball');
+  let pos = 0, vel = 0, target = 0, mode = 'spring', dragY = 0, lastT = 0, sel = -1, wheelT = 0;
+  const maxI = LAWS.length - 1;
+
+  drum.addEventListener('pointerdown', (e) => { mode = 'drag'; vel = 0; dragY = e.clientY; lastT = performance.now(); drum.setPointerCapture(e.pointerId); drum.classList.add('drag'); });
+  drum.addEventListener('pointermove', (e) => {
+    if (mode !== 'drag') return;
+    const now = performance.now(), dtm = Math.max(4, now - lastT) / 1000; let d = -(e.clientY - dragY) / ITEM;
+    if (pos < 0 || pos > maxI) d *= 0.35;
+    pos += d; vel = vel * 0.6 + (d / dtm) * 0.4; dragY = e.clientY; lastT = now;
+  });
+  const end = () => { if (mode !== 'drag') return; drum.classList.remove('drag'); if (performance.now() - lastT > 90) vel = 0; mode = 'coast'; };
+  drum.addEventListener('pointerup', end); drum.addEventListener('pointercancel', end);
+  drum.addEventListener('wheel', (e) => { e.preventDefault(); const now = performance.now(); if (now - wheelT < 90) return; wheelT = now; nudge(Math.sign(e.deltaY)); }, { passive: false });
+  drum.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { nudge(1); e.preventDefault(); } if (e.key === 'ArrowUp') { nudge(-1); e.preventDefault(); } });
+  function nudge(d) { target = Math.max(0, Math.min(maxI, Math.round(mode === 'spring' ? target : pos) + d)); mode = 'spring'; }
+
+  function render() {
+    els.forEach((el, i) => {
+      const a = (i - pos) * STEP;
+      if (Math.abs(a) > 88) { el.style.opacity = '0'; return; }
+      const c = Math.cos(a * Math.PI / 180), near = Math.max(0, 1 - Math.abs(i - pos));
+      el.style.opacity = (0.16 + 0.84 * c * c * c).toFixed(3);
+      el.style.transform = `translateZ(${-RAD}px) rotateX(${(-a).toFixed(2)}deg) translateZ(${RAD}px) scale(${(0.9 + near * 0.1).toFixed(3)})`;
+      el.style.color = near > 0.5 ? 'var(--ink)' : 'var(--muted)';
+    });
+    const s = Math.max(0, Math.min(maxI, Math.round(pos)));
+    if (s !== sel) {
+      sel = s; const l = LAWS[s];
+      $('idx').textContent = String(s + 1).padStart(2, '0') + ' / ' + LAWS.length; $('use').textContent = l[2]; $('bez').textContent = `cubic-bezier(${l[1]})`;
+      els.forEach((el, i) => el.setAttribute('aria-selected', String(i === s)));
+      if (!AK.RM && ball.animate) ball.animate([{ left: '0%' }, { left: 'calc(100% - 8px)' }], { duration: 900, easing: `cubic-bezier(${l[1]})`, fill: 'forwards' });
+    }
+  }
+  AK.loop((dt) => {
+    if (mode === 'coast') {
+      vel *= Math.exp(-3.4 * dt); pos += vel * dt;
+      if (pos < 0 || pos > maxI || Math.abs(vel) < 1.6) { target = Math.max(0, Math.min(maxI, Math.round(pos + vel * 0.12))); mode = 'spring'; }
+    } else if (mode === 'spring') {
+      vel += ((target - pos) * 190 - vel * 24) * dt; pos += vel * dt;
+      if (Math.abs(target - pos) < 0.0005 && Math.abs(vel) < 0.005) { pos = target; vel = 0; }
+    }
+    render();
+  });
+})();
+</script></body></html>

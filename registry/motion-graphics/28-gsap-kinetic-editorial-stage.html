@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 28 · Kinetic Editorial Stage — GSAP 3.12 orchestrated Swiss poster choreography: split-glyph masked baseline reveals, SVG hairline drawing, and gsap.quickTo() magnetic 3D card tilt. Dependency: gsap@3.12.5. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — GSAP Kinetic Editorial Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.modes { position: absolute; right: 1.25rem; bottom: 0.9rem; z-index: 4; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.modes button {
+  font: inherit; font-size: 8.5px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); background: color-mix(in srgb, var(--bg) 74%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong); border-radius: 99px; padding: 6px 12px;
+  cursor: pointer; transition: color 0.25s, border-color 0.25s, background-color 0.25s, transform 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+.modes button:hover { color: var(--ink); border-color: var(--ink); }
+.modes button:active { transform: scale(0.94); }
+.modes button[aria-pressed="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+body { display: grid; place-items: center; perspective: 1100px; }
+.stage {
+  position: relative; width: min(86vw, 640px); padding: clamp(1.4rem, 4vw, 2.6rem);
+  border: 1px solid var(--line-strong); border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  transform-style: preserve-3d; will-change: transform;
+  box-shadow: 0 32px 80px -28px rgba(0, 0, 0, 0.55);
+}
+.kicker {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+.kicker b { color: var(--flame); }
+.rule-svg { width: 100%; height: 2px; display: block; margin-bottom: 1.35rem; overflow: visible; }
+.rule-svg line { stroke: var(--line-strong); stroke-width: 1; }
+.rule-svg line.accent { stroke: var(--flame); stroke-width: 1.5; }
+.headline {
+  font-family: "Syne", sans-serif; font-weight: 800; text-transform: uppercase;
+  font-size: clamp(1.8rem, 5.6vw, 3.6rem); line-height: 0.94; letter-spacing: -0.035em;
+  color: var(--ink);
+}
+.headline .serif {
+  font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400;
+  text-transform: none; letter-spacing: 0; color: var(--flame);
+}
+.line-mask { display: block; overflow: hidden; padding: 0.04em 0; }
+.glyph { display: inline-block; will-change: transform, opacity; }
+.footer-row {
+  margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  font-size: 10px; color: var(--muted);
+}
+.pill {
+  padding: 5px 11px; border-radius: 99px; border: 1px solid var(--line-strong);
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink);
+  background: transparent; cursor: pointer; font-family: inherit;
+  transition: border-color 0.2s, color 0.2s;
+}
+.pill:hover { border-color: var(--flame); color: var(--flame); }
+.hint { left: 1.25rem; transform: none; }
+
+/* === AK v2.3 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint { font-size: 8px !important; letter-spacing: 0.13em !important; }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { display: none !important; }
+  h1 { left: 0.85rem !important; right: 0.85rem !important; bottom: 3.45rem !important; font-size: clamp(1.1rem, 5vw, 1.8rem) !important; }
+  .modes { right: 0.85rem !important; left: 0.85rem !important; bottom: 0.7rem !important; justify-content: flex-start !important; gap: 5px !important; }
+  .modes button { font-size: 7.5px !important; padding: 5px 9px !important; letter-spacing: 0.14em !important; }
+}
+
+</style></head><body>
+<p class="hud"><b>28</b>&nbsp;&nbsp;GSAP 3.12 · timeline · split-glyph mask · quickTo 3D tilt</p>
+<p class="read" id="read">t 0.00s</p>
+<article class="stage" id="stage" aria-label="GSAP choreographed editorial poster">
+  <div class="kicker"><span><b>01</b> · CHOREOGRAPHY</span><span id="preset-lbl">KINETIC SNAP</span></div>
+  <svg class="rule-svg" viewBox="0 0 600 2" preserveAspectRatio="none" aria-hidden="true">
+    <line x1="0" y1="1" x2="600" y2="1" />
+    <line class="accent" id="rule-acc" x1="0" y1="1" x2="600" y2="1" stroke-dasharray="600" stroke-dashoffset="600" />
+  </svg>
+  <h1 class="headline" id="hl">
+    <span class="line-mask" data-text="PRECISION"></span>
+    <span class="line-mask serif" data-text="in every frame."></span>
+  </h1>
+  <div class="footer-row">
+    <span id="ease-read">expo.out · stagger 0.028s</span>
+    <button type="button" class="pill" id="replay">Replay ↻</button>
+  </div>
+</article>
+<p class="hint">Move pointer to tilt · click Replay or switch preset</p>
+<div class="modes" role="group" aria-label="GSAP choreography preset">
+  <button type="button" data-p="snap" aria-pressed="true">Kinetic Snap</button>
+  <button type="button" data-p="drift" aria-pressed="false">Editorial Drift</button>
+  <button type="button" data-p="elastic" aria-pressed="false">Elastic</button>
+</div>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => { const c = rgb(v); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      if (ctx) ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => { if (!P.down) return; P.down = false; if (P.onUp) P.onUp(e); };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+window.addEventListener('DOMContentLoaded', () => {
+  'use strict';
+  const stage = document.getElementById('stage'), read = document.getElementById('read');
+  const ruleAcc = document.getElementById('rule-acc'), easeRead = document.getElementById('ease-read'), presetLbl = document.getElementById('preset-lbl');
+  /* Split lines into individually masked glyphs */
+  document.querySelectorAll('.line-mask').forEach((row) => {
+    const txt = row.dataset.text || '';
+    row.innerHTML = '';
+    for (const ch of txt) {
+      const s = document.createElement('span');
+      s.className = 'glyph';
+      s.textContent = ch === ' ' ? '\u00a0' : ch;
+      row.appendChild(s);
+    }
+  });
+  const glyphs = Array.from(document.querySelectorAll('.glyph'));
+  const PRESETS = {
+    snap: { label: 'KINETIC SNAP', ease: 'expo.out', dur: 0.72, stagger: 0.026, y: '115%', rot: 6 },
+    drift: { label: 'EDITORIAL DRIFT', ease: 'power3.out', dur: 1.05, stagger: 0.036, y: '100%', rot: 0 },
+    elastic: { label: 'ELASTIC CASCADE', ease: 'elastic.out(1, 0.55)', dur: 1.25, stagger: 0.032, y: '125%', rot: -8 }
+  };
+  let active = 'snap', tl = null;
+
+  function play(key) {
+    active = key;
+    const p = PRESETS[key];
+    presetLbl.textContent = p.label;
+    easeRead.textContent = `${p.ease} · stagger ${p.stagger}s`;
+    if (AK.RM || typeof window.gsap === 'undefined') {
+      glyphs.forEach((g) => { g.style.transform = 'none'; g.style.opacity = '1'; });
+      ruleAcc.style.strokeDashoffset = '0';
+      read.textContent = 'static';
+      return;
+    }
+    if (tl) tl.kill();
+    tl = gsap.timeline({
+      onUpdate: () => { read.textContent = 't ' + tl.time().toFixed(2) + 's'; }
+    });
+    tl.fromTo(ruleAcc, { strokeDashoffset: 600 }, { strokeDashoffset: 0, duration: 0.85, ease: 'power4.inOut' }, 0)
+      .fromTo(glyphs,
+        { y: p.y, opacity: 0, rotateZ: p.rot },
+        { y: '0%', opacity: 1, rotateZ: 0, duration: p.dur, ease: p.ease, stagger: p.stagger },
+        0.08
+      )
+      .fromTo('.footer-row', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, 0.38);
+  }
+
+  /* Magnetic 3D perspective tilt via gsap.quickTo */
+  if (!AK.RM && typeof window.gsap !== 'undefined') {
+    const qRx = gsap.quickTo(stage, 'rotationX', { duration: 0.55, ease: 'power3.out' });
+    const qRy = gsap.quickTo(stage, 'rotationY', { duration: 0.55, ease: 'power3.out' });
+    window.addEventListener('pointermove', (e) => {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;
+      const ny = (e.clientY / window.innerHeight) * 2 - 1;
+      qRx(-ny * 9); qRy(nx * 11);
+    }, { passive: true });
+    window.addEventListener('pointerleave', () => { qRx(0); qRy(0); });
+  }
+
+  document.getElementById('replay').addEventListener('click', () => play(active));
+  document.querySelectorAll('.modes button').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.modes button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    play(b.dataset.p);
+  }));
+  play('snap');
+});
+</script></body></html>

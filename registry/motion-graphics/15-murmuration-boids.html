@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 15 · Murmuration — Reynolds boids (separation · alignment · cohesion) on a spatial hash, pointer acts as a falcon. Zero dependencies. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Murmuration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+
+/* === AK v2.2 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint {
+    font-size: 8px !important;
+    letter-spacing: 0.13em !important;
+  }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { bottom: 0.7rem !important; font-size: 7.5px !important; }
+  h1 {
+    left: 0.85rem !important;
+    right: 0.85rem !important;
+    font-size: clamp(1.1rem, 5.2vw, 1.8rem) !important;
+  }
+  .modes, .dock {
+    right: 0.85rem !important;
+    left: 0.85rem !important;
+    bottom: 0.7rem !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+  }
+  .modes button, .dock button {
+    font-size: 7.5px !important;
+    padding: 5px 9px !important;
+    letter-spacing: 0.14em !important;
+  }
+}
+
+</style></head><body>
+<p class="hud"><b>15</b>&nbsp;&nbsp;Murmuration · Reynolds boids · spatial hash O(n)</p>
+<p class="read" id="read">520 birds</p>
+<canvas id="c" aria-label="A flock of birds that avoids your pointer"></canvas>
+<p class="hint">Your pointer is the falcon · press to scatter</p>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => {
+    const c = rgb(v);
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => {
+      if (!P.down) return;
+      P.down = false;
+      if (P.onUp) P.onUp(e);
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+(() => {
+  'use strict';
+  const cv = document.getElementById('c'), S = AK.fit(cv), ctx = S.ctx, P = AK.ptr(cv);
+  const N = Math.min(520, Math.max(220, Math.round(S.W * S.H / 1500))), R = 46, CELL = R;
+  const X = new Float32Array(N), Y = new Float32Array(N), VX = new Float32Array(N), VY = new Float32Array(N);
+  for (let i = 0; i < N; i++) { const a = Math.random() * 6.283; X[i] = Math.random() * S.W; Y[i] = Math.random() * S.H; VX[i] = Math.cos(a) * 110; VY[i] = Math.sin(a) * 110; }
+  document.getElementById('read').textContent = N + ' birds';
+  let grid = new Map();
+  const MAXV = 190, MINV = 90;
+
+  function step(dt, t) {
+    const W = S.W, H = S.H; grid.clear();
+    for (let i = 0; i < N; i++) { const k = Math.floor(X[i] / CELL) + Math.floor(Y[i] / CELL) * 4096; let g = grid.get(k); if (!g) grid.set(k, g = []); g.push(i); }
+    const ax0 = W * (0.5 + 0.3 * Math.cos(t * 0.21)), ay0 = H * (0.5 + 0.26 * Math.sin(t * 0.33));
+    for (let i = 0; i < N; i++) {
+      const x = X[i], y = Y[i], cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+      let sx = 0, sy = 0, avx = 0, avy = 0, mx = 0, my = 0, n = 0;
+      for (let gy = cy - 1; gy <= cy + 1; gy++) for (let gx = cx - 1; gx <= cx + 1; gx++) {
+        const g = grid.get(gx + gy * 4096); if (!g) continue;
+        for (let m = 0; m < g.length; m++) {
+          const j = g[m]; if (j === i) continue;
+          const dx = X[j] - x, dy = Y[j] - y, d2 = dx * dx + dy * dy;
+          if (d2 > R * R || d2 === 0) continue;
+          n++; avx += VX[j]; avy += VY[j]; mx += dx; my += dy;
+          if (d2 < 324) { const d = Math.sqrt(d2); sx -= dx / d * (18 - d); sy -= dy / d * (18 - d); }
+        }
+      }
+      let fx = sx * 9, fy = sy * 9;
+      if (n) { fx += (avx / n - VX[i]) * 1.5 + mx / n * 0.85; fy += (avy / n - VY[i]) * 1.5 + my / n * 0.85; }
+      fx += (ax0 - x) * 0.11; fy += (ay0 - y) * 0.11;
+      if (P.in) {
+        const dx = x - P.x, dy = y - P.y, d2 = dx * dx + dy * dy, rr = P.down ? 240 : 130;
+        if (d2 < rr * rr) { const d = Math.sqrt(d2) || 1, f = (1 - d / rr) * (P.down ? 2600 : 1300); fx += dx / d * f; fy += dy / d * f; }
+      }
+      VX[i] += fx * dt; VY[i] += fy * dt;
+      const sp = Math.hypot(VX[i], VY[i]) || 1, cl = sp > MAXV ? MAXV / sp : sp < MINV ? MINV / sp : 1;
+      VX[i] *= cl; VY[i] *= cl;
+      X[i] += VX[i] * dt; Y[i] += VY[i] * dt;
+      if (X[i] < -20) X[i] += W + 40; else if (X[i] > W + 20) X[i] -= W + 40;
+      if (Y[i] < -20) Y[i] += H + 40; else if (Y[i] > H + 20) Y[i] -= H + 40;
+    }
+  }
+  function draw() {
+    ctx.fillStyle = AK.rgba('--bg', 0.3); ctx.fillRect(0, 0, S.W, S.H);
+    ctx.lineCap = 'round';
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.strokeStyle = pass ? AK.css('--flame') : AK.rgba('--ink', 0.82); ctx.lineWidth = pass ? 1.9 : 1.35; ctx.beginPath();
+      for (let i = 0; i < N; i++) {
+        if ((i % 11 === 0) !== !!pass) continue;
+        const sp = Math.hypot(VX[i], VY[i]) || 1, l = 4 + sp / 34;
+        ctx.moveTo(X[i], Y[i]); ctx.lineTo(X[i] - VX[i] / sp * l, Y[i] - VY[i] / sp * l);
+      }
+      ctx.stroke();
+    }
+    if (P.in) { ctx.strokeStyle = AK.rgba('--gold', 0.5); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(P.x, P.y, P.down ? 26 : 13, 0, 6.283); ctx.stroke(); }
+  }
+  ctx.fillStyle = AK.css('--bg'); ctx.fillRect(0, 0, S.W, S.H);
+  for (let i = 0; i < 120; i++) step(1 / 60, i / 60);
+  AK.loop((dt, t) => { step(dt, t + 2); draw(); });
+})();
+</script></body></html>

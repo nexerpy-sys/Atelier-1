@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 27 · Chromatic Glass Sculpt — Three.js MeshPhysicalMaterial (transmission, IOR 1.52, iridescence, RoomEnvironment PMREM) + EffectComposer UnrealBloomPass over an editorial architectural backdrop. Dependencies: three@0.170.0 + postprocessing. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Chromatic Glass Sculpt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.modes { position: absolute; right: 1.25rem; bottom: 0.9rem; z-index: 4; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.modes button {
+  font: inherit; font-size: 8.5px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); background: color-mix(in srgb, var(--bg) 74%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong); border-radius: 99px; padding: 6px 12px;
+  cursor: pointer; transition: color 0.25s, border-color 0.25s, background-color 0.25s, transform 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+.modes button:hover { color: var(--ink); border-color: var(--ink); }
+.modes button:active { transform: scale(0.94); }
+.modes button[aria-pressed="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+.hint { left: 1.25rem; transform: none; }
+
+/* === AK v2.3 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint { font-size: 8px !important; letter-spacing: 0.13em !important; }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { display: none !important; }
+  h1 { left: 0.85rem !important; right: 0.85rem !important; bottom: 3.45rem !important; font-size: clamp(1.1rem, 5vw, 1.8rem) !important; }
+  .modes { right: 0.85rem !important; left: 0.85rem !important; bottom: 0.7rem !important; justify-content: flex-start !important; gap: 5px !important; }
+  .modes button { font-size: 7.5px !important; padding: 5px 9px !important; letter-spacing: 0.14em !important; }
+}
+
+</style></head><body>
+<p class="hud"><b>27</b>&nbsp;&nbsp;Three.js · MeshPhysicalMaterial · IOR 1.52 · UnrealBloomPass</p>
+<p class="read" id="read">IOR 1.52 · BLOOM 0.42</p>
+<canvas id="c" aria-label="Interactive 3D refractive glass sculpture with optical bloom"></canvas>
+<p class="hint">Move to refract · switch geometry below</p>
+<div class="modes" role="group" aria-label="Sculpture geometry">
+  <button type="button" data-g="knot" aria-pressed="true">Torus Knot</button>
+  <button type="button" data-g="ico" aria-pressed="false">Facet</button>
+  <button type="button" data-g="torus" aria-pressed="false">Monolith Ring</button>
+</div>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => { const c = rgb(v); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      if (ctx) ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => { if (!P.down) return; P.down = false; if (P.onUp) P.onUp(e); };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+</script>
+<script type="module">
+const cv = document.getElementById('c'), read = document.getElementById('read'), P = AK.ptr(cv);
+let activeShape = 'knot', onShape = null;
+document.querySelectorAll('.modes button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.modes button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  activeShape = b.dataset.g;
+  if (onShape) onShape(activeShape);
+}));
+
+function startFallback() {
+  const S = AK.fit(cv), ctx = S.ctx;
+  AK.loop((dt, t) => {
+    const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = AK.css('--line'); ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.24;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * 0.35);
+    ctx.strokeStyle = AK.rgba('--flame', 0.85); ctx.lineWidth = 14;
+    ctx.beginPath(); ctx.ellipse(0, 0, R, R * 0.62, 0.4, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = AK.rgba('--cyan', 0.65); ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(0, 0, R * 0.94, R * 0.56, 0.4, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  });
+}
+
+try {
+  const base = 'https://cdn.jsdelivr.net/npm/three@0.170.0';
+  const [THREE, { RoomEnvironment }, { EffectComposer }, { RenderPass }, { UnrealBloomPass }] = await Promise.all([
+    import(`${base}/build/three.module.js`),
+    import(`${base}/examples/jsm/environments/RoomEnvironment.js`),
+    import(`${base}/examples/jsm/postprocessing/EffectComposer.js`),
+    import(`${base}/examples/jsm/postprocessing/RenderPass.js`),
+    import(`${base}/examples/jsm/postprocessing/UnrealBloomPass.js`)
+  ]);
+
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  camera.position.set(0, 0, 5.2);
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  /* Editorial backdrop card behind the glass so real transmission refraction shines */
+  const bgCanvas = document.createElement('canvas'); bgCanvas.width = 1024; bgCanvas.height = 512;
+  const bctx = bgCanvas.getContext('2d');
+  const bgTex = new THREE.CanvasTexture(bgCanvas);
+  const paintBackdrop = () => {
+    bctx.fillStyle = AK.css('--bg'); bctx.fillRect(0, 0, 1024, 512);
+    bctx.strokeStyle = AK.css('--line-strong'); bctx.lineWidth = 1.5;
+    for (let x = 0; x <= 1024; x += 64) { bctx.beginPath(); bctx.moveTo(x, 0); bctx.lineTo(x, 512); bctx.stroke(); }
+    for (let y = 0; y <= 512; y += 64) { bctx.beginPath(); bctx.moveTo(0, y); bctx.lineTo(1024, y); bctx.stroke(); }
+    bctx.fillStyle = AK.css('--flame'); bctx.fillRect(96, 232, 832, 48);
+    bctx.fillStyle = AK.css('--ink'); bctx.font = '800 92px Syne, sans-serif'; bctx.textAlign = 'center'; bctx.textBaseline = 'middle';
+    bctx.fillText('KINETIK', 512, 165);
+    bctx.fillStyle = AK.css('--gold'); bctx.font = 'italic 400 72px "Instrument Serif", serif';
+    bctx.fillText('Refraction · 1.52', 512, 358);
+    bgTex.needsUpdate = true;
+  };
+  const backPlane = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 3.8), new THREE.MeshBasicMaterial({ map: bgTex }));
+  backPlane.position.z = -2.2;
+  scene.add(backPlane);
+
+  const geos = {
+    knot: new THREE.TorusKnotGeometry(0.95, 0.30, 180, 32),
+    ico: new THREE.IcosahedronGeometry(1.22, 1),
+    torus: new THREE.TorusGeometry(1.08, 0.36, 48, 128)
+  };
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 0.96,
+    opacity: 1,
+    transparent: true,
+    roughness: 0.06,
+    metalness: 0.02,
+    ior: 1.52,
+    thickness: 1.65,
+    attenuationDistance: 2.2,
+    attenuationColor: new THREE.Color('#ff3d00'),
+    iridescence: 1.0,
+    iridescenceIOR: 1.35,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05
+  });
+  const mesh = new THREE.Mesh(geos.knot, mat);
+  scene.add(mesh);
+
+  const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+  keyLight.position.set(3, 4, 5);
+  const rimLight = new THREE.PointLight(0xff3d00, 12, 14);
+  rimLight.position.set(-2.5, -1.5, 2.2);
+  const cyanLight = new THREE.PointLight(0x00f0ff, 8, 14);
+  cyanLight.position.set(2.5, 2.0, -1.2);
+  scene.add(keyLight, rimLight, cyanLight);
+
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.38, 0.55, 0.72);
+  composer.addPass(bloom);
+
+  onShape = (k) => { mesh.geometry = geos[k] || geos.knot; };
+
+  const syncTheme = () => {
+    scene.background = new THREE.Color(AK.css('--bg'));
+    mat.attenuationColor.set(AK.css('--flame'));
+    rimLight.color.set(AK.css('--flame'));
+    cyanLight.color.set(AK.css('--cyan'));
+    paintBackdrop();
+  };
+  syncTheme(); AK.onTheme(syncTheme);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(paintBackdrop);
+
+  const resize = () => {
+    const w = Math.max(1, cv.clientWidth), h = Math.max(1, cv.clientHeight);
+    renderer.setSize(w, h, false);
+    composer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  };
+  resize();
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+
+  let rx = 0, ry = 0;
+  const tick = (dt, t) => {
+    const tx = P.in ? (P.y / Math.max(1, cv.clientHeight) - 0.5) * 1.1 : Math.sin(t * 0.45) * 0.32;
+    const ty = P.in ? (P.x / Math.max(1, cv.clientWidth) - 0.5) * 1.4 : 0;
+    rx += (tx - rx) * Math.min(1, dt * 6);
+    ry += (ty - ry) * Math.min(1, dt * 6);
+    mesh.rotation.x = rx + t * 0.22;
+    mesh.rotation.y = ry + t * 0.34;
+    composer.render();
+  };
+  if (AK.RM) { tick(0.016, 0.8); }
+  else { AK.loop(tick); }
+} catch (_) {
+  startFallback();
+}
+</script></body></html>

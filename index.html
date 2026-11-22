@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#070709" />
+  <meta name="description" content="A curated frontend reference: 183 typefaces, pairings, colour systems, motion laws, interactions, templates and graphics, readable by developers and AI agents." />
+  <meta property="og:title" content="Atelier Kinetik: a frontend reference for people and coding agents" />
+  <meta property="og:description" content="183 design and motion resources in nine categories, each with a live preview, readable source and an entry in a structured registry." />
+  <title>Atelier Kinetik: frontend design and motion reference</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070709'/%3E%3Cg transform='translate(3 3) scale(.8125)'%3E%3Ccircle cx='16' cy='16' r='10.5' fill='none' stroke='%23F4F2EC' stroke-width='1.8' stroke-dasharray='54 12' transform='rotate(-38 16 16)'/%3E%3Cpath d='M16 1.5v7M16 23.5v7M1.5 16h7M23.5 16h7' stroke='%23F4F2EC' stroke-width='1.8'/%3E%3Cpath d='M10.5 21.5 22 10l-4.2 8.6Z' fill='%23FF3D00'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.documentElement.classList.add("ak-armed");
+      setTimeout(function () {
+        if (!window.__akStarted) document.documentElement.classList.remove("ak-armed");
+      }, 4500);
+    }
+  </script>
+  <link rel="stylesheet" href="assets/app.css" />
+  <link rel="stylesheet" href="assets/kinetik-v27.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js" defer></script>
+</head>
+<body>
+  <!-- Cosmic starfield + subtle nebula + grain -->
+  <canvas id="cosmos-canvas" aria-hidden="true" class="fixed inset-0 z-0 h-full w-full pointer-events-none"></canvas>
+  <div class="nebula" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div id="ak-toast" role="status" aria-live="polite"></div>
+
+  <!-- Frosted Hairline Header (Left Hamburger · Zero Bleed) -->
+  <header id="site-nav" class="site-header fixed inset-x-0 top-0 z-50">
+    <div class="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-2 px-3 sm:gap-3 sm:px-10">
+      <div class="flex min-w-0 items-center gap-2 sm:gap-3.5">
+        <button type="button" id="menu-toggle" class="icon-menu-btn" aria-expanded="false" aria-controls="site-menu" aria-label="Open index menu">
+          <span class="menu-lines" aria-hidden="true"><span class="ml-top"></span><span class="ml-bot"></span></span>
+        </button>
+
+        <a href="#/" data-view="home" class="flex shrink-0 items-center gap-2 text-[var(--ink)] sm:gap-2.5">
+          <svg viewBox="0 0 32 32" class="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden="true">
+            <circle cx="16" cy="16" r="10.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="54 12" transform="rotate(-38 16 16)" />
+            <path d="M16 1.5v7M16 23.5v7M1.5 16h7M23.5 16h7" stroke="currentColor" stroke-width="1.6" />
+            <path d="M10.5 21.5 22 10l-4.2 8.6Z" fill="#FF3D00" />
+          </svg>
+          <span class="f-display whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.11em] sm:text-sm sm:tracking-[0.18em]">Atelier Kinetik</span>
+        </a>
+      </div>
+
+      <nav class="hidden items-center gap-1 lg:flex" aria-label="Library categories">
+        <button type="button" data-view="mg" class="hdr-link f-mono">Motion graphics <sup>30</sup></button>
+        <button type="button" data-view="fx" class="hdr-link f-mono">Canvas FX <sup>16</sup></button>
+        <button type="button" data-view="motion" class="hdr-link f-mono">Interactions <sup>24</sup></button>
+        <button type="button" data-view="templates" class="hdr-link f-mono">Templates <sup>08</sup></button>
+        <button type="button" data-view="systems" class="hdr-link f-mono">Colour <sup>06</sup></button>
+      </nav>
+
+      <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <button type="button" id="ak-open-palette" class="btn-ghost f-mono hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-[9.5px] uppercase tracking-[0.11em] md:flex sm:px-3.5 sm:py-2 sm:text-[10.5px] sm:tracking-[0.14em]" title="Search 183 resources (/ or Cmd+K)">
+          <span>Search</span><kbd class="opacity-60">/</kbd>
+        </button>
+        <button type="button" id="nav-audio-btn" aria-pressed="false" class="btn-ghost f-mono hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-[9.5px] uppercase tracking-[0.11em] sm:flex sm:px-3.5 sm:py-2 sm:text-[10.5px] sm:tracking-[0.14em]" title="Toggle procedural mechanical audio (Tone.js)">
+          <span class="audio-dot" aria-hidden="true"></span>
+          <span id="nav-audio-label">Sound off</span>
+        </button>
+        <button type="button" id="nav-replay-btn" class="btn-ghost f-mono flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[9.5px] uppercase tracking-[0.11em] sm:gap-2 sm:px-4 sm:py-2 sm:text-[11px] sm:tracking-[0.16em]">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+          </svg>
+          <span>Replay</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Swiss Editorial Left Index Drawer (Pure Hairlines, Zero Slop) -->
+  <div id="site-menu" class="site-menu" role="dialog" aria-modal="true" aria-label="Atelier Kinetik Index" aria-hidden="true">
+    <div class="menu-bg" aria-hidden="true"></div>
+    <aside class="menu-drawer" id="menu-drawer">
+      <canvas id="menu-canvas" class="menu-canvas" aria-hidden="true"></canvas>
+
+      <div class="menu-head">
+        <div class="menu-brand-meta">
+          <span class="menu-beacon" aria-hidden="true"></span>
+          <span class="menu-kicker f-mono">INDEX <em>·</em> V2.8.0</span>
+          <span class="menu-live-view f-mono" id="menu-live-view">HOME</span>
+        </div>
+        <button type="button" id="menu-close" class="menu-close f-mono" aria-label="Close index">
+          <span class="menu-close-key">ESC</span>
+          <span class="menu-close-x" aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <svg class="menu-rule-svg" viewBox="0 0 600 2" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="0" y1="1" x2="600" y2="1" class="menu-rule-base" />
+        <line x1="0" y1="1" x2="600" y2="1" class="menu-rule-flame" id="menu-rule-flame" />
+      </svg>
+
+      <div class="menu-scroll">
+        <p class="menu-sec-label f-mono">Categories</p>
+        <nav class="menu-index" aria-label="Primary library categories">
+          <button type="button" data-view="home" class="idx-row is-active">
+            <span class="idx-num f-mono">00</span>
+            <span class="idx-copy">
+              <span class="idx-title f-display">Home</span>
+              <span class="idx-sub f-serif">Frontend reference &amp; Agentic Build</span>
+            </span>
+            <span class="idx-right">
+              <span class="idx-meta f-mono">183</span>
+              <span class="idx-arr" aria-hidden="true">↗</span>
+            </span>
+          </button>
+          <button type="button" data-view="mg" class="idx-row">
+            <span class="idx-num f-mono">01</span>
+            <span class="idx-copy">
+              <span class="idx-title f-display">Motion Graphics</span>
+              <span class="idx-sub f-serif">Fluids, SDF, WebGL, Three.js &amp; GSAP</span>
+            </span>
+            <span class="idx-right">
+              <span class="idx-meta f-mono">30</span>
+              <span class="idx-arr" aria-hidden="true">↗</span>
+            </span>
+          </button>
+          <button type="button" data-view="fx" class="idx-row">
+            <span class="idx-num f-mono">02</span>
+            <span class="idx-copy">
+              <span class="idx-title f-display">Canvas FX</span>
+              <span class="idx-sub f-serif">60fps ambient &amp; hero backdrops</span>
+            </span>
+            <span class="idx-right">
+              <span class="idx-meta f-mono">16</span>
+              <span class="idx-arr" aria-hidden="true">↗</span>
+            </span>
+          </button>
+          <button type="button" data-view="motion" class="idx-row">
+            <span class="idx-num f-mono">03</span>
+            <span class="idx-copy">
+              <span class="idx-title f-display">Micro-Interactions</span>
+              <span class="idx-sub f-serif">Live looping tactile UI primitives</span>
+            </span>
+            <span class="idx-right">
+              <span class="idx-meta f-mono">24</span>
+              <span class="idx-arr" aria-hidden="true">↗</span>
+            </span>
+          </button>
+          <button type="button" data-view="templates" class="idx-row">
+            <span class="idx-num f-mono">04</span>
+            <span class="idx-copy">
+              <span class="idx-title f-display">Section Templates</span>
+              <span class="idx-sub f-serif">Drop-in editorial page architecture</span>
+            </span>
+            <span class="idx-right">
+              <span class="idx-meta f-mono">08</span>
+              <span class="idx-arr" aria-hidden="true">↗</span>
+            </span>
+          </button>
+          <button type="button" data-view="systems" class="idx-row">
+            <span class="idx-num f-mono">05</span>
+            <span class="idx-copy">
+              <span class="idx-title f-display">Colour Systems</span>
+              <span class="idx-sub f-serif">Semantic scales and interface tokens</span>
+            </span>
+            <span class="idx-right">
+              <span class="idx-meta f-mono">06</span>
+              <span class="idx-arr" aria-hidden="true">↗</span>
+            </span>
+          </button>
+        </nav>
+
+        <div class="menu-chapters">
+          <p class="menu-sec-label f-mono">Sections on Home</p>
+          <div class="menu-chap-row">
+            <a href="#forge" data-home-scroll="#forge" class="chap-link f-mono">Agentic Build</a>
+            <a href="#pantheon" data-home-scroll="#pantheon" class="chap-link f-mono">Visual Agents</a>
+            <a href="#registry" data-home-scroll="#registry" class="chap-link f-mono">The Library</a>
+            <a href="#easings" data-home-scroll="#easings" class="chap-link f-mono">Motion Laws</a>
+          </div>
+        </div>
+
+        <div class="menu-ai-dock">
+          <p class="menu-sec-label f-mono">For AI Systems</p>
+          <div class="menu-ai-actions">
+            <button type="button" id="menu-copy-llms" class="menu-ai-btn f-mono">
+              <i data-lucide="file-text" class="menu-ico"></i>
+              <span>Copy llms.txt</span>
+            </button>
+            <a href="registry.json" target="_blank" rel="noopener" class="menu-ai-btn f-mono">
+              <i data-lucide="braces" class="menu-ico"></i>
+              <span>Open registry.json ↗</span>
+            </a>
+            <button type="button" id="menu-replay" class="menu-ai-btn f-mono">
+              <i data-lucide="rotate-ccw" class="menu-ico"></i>
+              <span>Replay animation</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-foot f-mono">
+        <span>183 RESOURCES · THREE.JS · GSAP · LENIS · MATTER.JS</span>
+        <span class="menu-coord" id="menu-coord">X 000 · Y 000</span>
+      </div>
+    </aside>
+  </div>
+
+  <main class="relative z-10">
+    <!-- ==================== VIEW 0: HOME SHOWCASE ==================== -->
+    <div id="view-home">
+    <!-- ========================================================== 00 HERO -->
+    <section id="top" data-build-zone class="relative mx-auto flex min-h-[100svh] w-full max-w-[1440px] flex-col justify-between overflow-hidden px-4 pb-8 pt-24 sm:px-10 sm:pb-9 sm:pt-28">
+      <!-- Sectioned Obsidian Gauge Block (Inline SVG elevation poster + Three.js WebGL2) -->
+      <div id="hero-orb-wrap" class="ak-gauge-slot pointer-events-none absolute -right-[14vw] top-[12vh] w-[84vw] max-w-[440px] opacity-90 will-change-transform sm:-right-[4vw] sm:top-[10vh] sm:w-[58vw] sm:max-w-[600px] sm:opacity-100 lg:right-[2vw] lg:w-[46vw] lg:max-w-[680px]">
+        <svg class="ak-gauge-poster" viewBox="0 0 800 500" role="img" aria-labelledby="ak-poster-title" xmlns="http://www.w3.org/2000/svg">
+          <title id="ak-poster-title">Architectural elevation of three obsidian plates with a vermilion witness seam and gold calibration marks</title>
+          <defs><linearGradient id="ak-elevation-shade" x2="0" y2="1"><stop stop-color="#24242d"/><stop offset="1" stop-color="#101014"/></linearGradient></defs>
+          <g fill="none" stroke="#8e8d8a" opacity=".45" stroke-width="1"><path d="M94 98H706M94 403H706M94 93v10m612-10v10M94 398v10m612-10v10M68 117v272m-5-272h10m-10 272h10M733 117v272m-5-272h10m-10 272h10"/><path stroke-dasharray="4 8" d="M400 78v349"/></g>
+          <g fill="url(#ak-elevation-shade)" stroke="#777680" stroke-width="2"><path d="M132 117H668l20 20v66l-20 20H132l-20-20v-66z"/><path d="M139 241H661l18 18v45l-18 18H139l-18-18v-45z"/><path d="M147 332H653l20 20v17l-20 20H147l-20-20v-17z"/></g>
+          <path d="M147 229H652" stroke="#ff3d00" stroke-width="4"/>
+          <path d="M153 157h56m-56 9h34m-34 9h17m443 94h37m-28 9h28m-18 9h18m-496 71h49m-49 9h23M170 147H580" stroke="#e5a93c" stroke-width="2"/>
+        </svg>
+        <canvas id="armillary-canvas" aria-hidden="true"></canvas>
+      </div>
+
+      <!-- Subtle legibility veil behind headline on smaller viewports -->
+      <div aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-0 w-full max-w-3xl bg-gradient-to-r from-[var(--bg)] via-[var(--bg)]/75 to-transparent lg:via-[var(--bg)]/35"></div>
+
+      <!-- Main Editorial Hero Focal Block -->
+      <div id="hero-head-wrap" class="relative my-auto max-w-4xl py-4 will-change-transform">
+        <p data-build="text" class="f-mono mb-6 inline-flex items-center gap-2.5 text-[10px] uppercase tracking-[0.22em] text-[var(--muted)] sm:text-[11px]">
+          <span class="h-1.5 w-1.5 rounded-full bg-[var(--flame)]"></span>
+          <span>Frontend reference · v2.8.0</span>
+        </p>
+
+        <h1 class="f-display hero-title font-extrabold text-[var(--ink)]">
+          <span data-build="rise"><span>A frontend reference</span></span>
+          <span data-build="rise"><span>for people and</span></span>
+          <span data-build="rise" class="f-serif italic font-normal text-[var(--flame)] sm:whitespace-nowrap"><span>coding agents.</span></span>
+        </h1>
+
+        <p data-build="text" class="mt-5 max-w-xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+          Atelier Kinetik collects 183 typefaces, colour systems, motion laws, interaction patterns, section templates and graphics in one place. Every resource has a live preview, readable source and an entry in <code class="f-mono text-xs text-[var(--ink)]">registry.json</code>.
+        </p>
+
+        <div class="mt-7 flex flex-wrap items-center gap-3">
+          <div class="magnetic inline-block" data-strength="0.28">
+            <button type="button" data-build="box" data-view="mg" class="btn-flame flex items-center gap-2.5 rounded-full px-6 py-3.5 text-sm font-semibold">
+              Browse the library
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m7 7 10 10" /><path d="M17 7v10H7" />
+              </svg>
+            </button>
+          </div>
+          <div class="magnetic inline-block" data-strength="0.22">
+            <button type="button" data-build="box" data-scroll="#forge" class="btn-ghost flex items-center gap-2.5 rounded-full px-6 py-3.5 text-sm font-semibold">
+              Watch Agentic Build
+            </button>
+          </div>
+          <button type="button" id="hero-copy-llms-btn" data-build="text" class="f-mono rounded-full px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-[var(--muted)] transition-colors hover:text-[var(--ink)]">
+            For AI systems: copy llms.txt
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Metadata Strip -->
+      <div class="relative mt-8">
+        <div data-build="line" class="h-px w-full bg-[var(--line)]"></div>
+        <dl class="grid grid-cols-2 gap-y-4 pt-5 sm:grid-cols-4 sm:divide-x sm:divide-[var(--line)]">
+          <div class="pr-4">
+            <dd data-build="text" class="f-display text-2xl font-bold text-[var(--ink)] sm:text-3xl"><span class="ak-count" data-to="183">183</span></dd>
+            <dt data-build="text" class="f-mono mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">Resources</dt>
+          </div>
+          <div class="sm:px-6">
+            <dd data-build="text" class="f-display text-2xl font-bold text-[var(--ink)] sm:text-3xl"><span class="ak-count" data-to="9">9</span></dd>
+            <dt data-build="text" class="f-mono mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">Categories</dt>
+          </div>
+          <div class="pr-4 sm:px-6">
+            <dd data-build="text" class="f-display text-2xl font-bold text-[var(--ink)] sm:text-3xl"><span class="ak-count" data-to="30">30</span></dd>
+            <dt data-build="text" class="f-mono mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">Motion graphics</dt>
+          </div>
+          <div class="sm:pl-6">
+            <dd data-build="text" class="f-display text-2xl font-bold text-[var(--ink)] sm:text-3xl"><span class="ak-count" data-to="60">60</span></dd>
+            <dt data-build="text" class="f-mono mt-1 text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">Typefaces</dt>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ================================================= EDITORIAL MARQUEE -->
+    <div id="editorial-marquee" class="relative overflow-hidden border-y border-[var(--line)] py-8 sm:py-11" aria-hidden="true">
+      <div id="marquee-shift" class="will-change-transform">
+        <div class="marquee flex w-max whitespace-nowrap text-5xl sm:text-8xl" id="marquee-track"></div>
+      </div>
+    </div>
+
+    <!-- ================================================= 01 THE LIVE FORGE -->
+    <section id="forge" class="relative mx-auto w-full max-w-[1440px] px-4 py-20 sm:px-10 sm:py-36">
+      <div class="grid gap-12 lg:grid-cols-12">
+        <div data-build-zone class="lg:col-span-4">
+          <p data-build="text" class="f-mono flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[var(--flame)]">
+            <span class="text-[var(--muted)]">01</span>
+            <span class="h-px w-8 bg-[var(--flame)]"></span>
+            Signature demonstration
+          </p>
+          <h2 class="f-display mt-8 text-4xl font-extrabold leading-[0.98] text-[var(--ink)] sm:text-5xl">
+            <span data-build="rise"><span>Agentic Build:</span></span>
+            <span data-build="rise" class="f-serif font-normal italic text-[var(--flame)]"><span>assembled while you watch.</span></span>
+          </h2>
+          <p data-build="text" class="mt-8 text-base leading-relaxed text-[var(--muted)]">
+            A group of visual agents assembles a section in front of you — placing structure, setting type, ruling dividers and applying timing, then clearing the frame to stage the next. Click anywhere on the board to direct the nearest visual agent.
+          </p>
+          <div data-build="line" class="mt-8 h-px w-full bg-[var(--line)]"></div>
+          <p data-build="text" class="f-mono mt-5 text-[10.5px] uppercase tracking-[0.16em] text-[var(--muted)]">Animated demonstration · Not a code generator</p>
+        </div>
+
+        <div class="lg:col-span-8">
+          <div id="live-artboard" data-ak-state="building" class="artboard relative flex min-h-[520px] cursor-crosshair flex-col justify-between overflow-hidden rounded-3xl p-4 sm:min-h-[600px] sm:p-6">
+            <!-- Anvil framing: registration corners, datum ruler, hot seam, inhale — decorative, zero CLS -->
+            <div id="forge-inhale" class="forge-inhale" aria-hidden="true"></div>
+            <span class="forge-corner forge-corner-tl" aria-hidden="true"></span>
+            <span class="forge-corner forge-corner-tr" aria-hidden="true"></span>
+            <span class="forge-corner forge-corner-bl" aria-hidden="true"></span>
+            <span class="forge-corner forge-corner-br" aria-hidden="true"></span>
+            <div class="forge-ruler" aria-hidden="true"></div>
+            <div id="forge-seam" class="forge-seam" aria-hidden="true"></div>
+            <div class="f-mono flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-[var(--muted)]">
+              <span class="flex min-w-0 items-center gap-2.5">
+                <span class="live-dot shrink-0"></span>
+                <span id="stage-cycle" class="inline-block truncate">Cycle 01 · Orbital player</span>
+              </span>
+              <span id="stage-state" class="inline-block shrink-0 text-[var(--flame)]">building</span>
+            </div>
+
+            <!-- Infinite Looping Build Zone -->
+            <div class="my-8 flex flex-1 items-center justify-center">
+              <div id="forge-loop-zone" data-build-zone="loop" class="w-full max-w-[410px]"></div>
+            </div>
+
+            <div class="f-mono flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-[var(--muted)]">
+              <span>Tap anywhere to summon</span>
+              <span id="stage-coords" class="shrink-0">X 0000 · Y 0000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================== 02 THE PANTHEON -->
+    <section id="pantheon" data-build-zone class="relative mx-auto w-full max-w-[1440px] px-4 py-20 sm:px-10 sm:py-36">
+      <div class="mb-14 grid gap-8 md:grid-cols-12 md:items-end">
+        <div class="md:col-span-8">
+          <p data-build="text" class="f-mono flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[var(--flame)]">
+            <span class="text-[var(--muted)]">02</span>
+            <span class="h-px w-8 bg-[var(--flame)]"></span>
+            Visual agents
+          </p>
+          <h2 class="f-display mt-8 text-4xl font-extrabold leading-[0.98] text-[var(--ink)] sm:text-6xl">
+            <span data-build="rise"><span>Eight visual agents.</span></span>
+            <span data-build="rise" class="f-serif font-normal italic text-[var(--flame)]"><span>One role each.</span></span>
+          </h2>
+        </div>
+        <p data-build="text" class="text-base leading-relaxed text-[var(--muted)] md:col-span-4">
+          Each cursor in Agentic Build handles a distinct task — boxes, type, hairlines or media — travelling along a bowed, minimum-jerk path with its own reveal rule.
+        </p>
+      </div>
+
+      <div id="pantheon-grid" class="grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Prometheus Lead Monolith Card -->
+        <article data-build="box" class="cell spot agent-card relative flex min-h-[440px] flex-col justify-between overflow-hidden p-6 sm:col-span-2 sm:min-h-[480px] lg:row-span-2" style="--tint:#FF3D00">
+          <div class="relative z-10 flex flex-wrap items-start justify-between gap-2">
+            <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">I · Fire-bringer</span>
+            <span class="flex shrink-0 items-center gap-3">
+              <svg viewBox="0 0 32 32" class="agent-cursor-svg h-8 w-8" aria-hidden="true" data-cursor="Prometheus"></svg>
+              <span data-build="box" class="f-mono rounded-full bg-[var(--flame)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">Lead architect</span>
+            </span>
+          </div>
+          <div id="monolith-frame" data-build="fade" class="arch absolute bottom-0 right-4 h-[68%] w-[44%] overflow-hidden opacity-75 sm:right-9 sm:h-[74%] sm:w-[42%] sm:opacity-100">
+            <img id="monolith-img" src="assets/obsidian-monolith.jpg" alt="Obsidian monolith under a cosmic starfield" class="h-[124%] w-full object-cover contrast-125 will-change-transform" />
+            <div class="absolute inset-0 bg-[var(--flame)] mix-blend-multiply opacity-55"></div>
+          </div>
+          <div class="relative z-10 max-w-[66%] sm:max-w-[49%]">
+            <h3 data-build="text" class="f-display text-3xl font-extrabold uppercase leading-none text-[var(--ink)] sm:text-5xl xl:text-6xl">Prome&shy;theus</h3>
+            <p data-build="text" class="mt-4 text-sm leading-relaxed text-[var(--muted)]">Frames every surface with a crosshair and snaps it to the grid. He stole the fire; the rest only follow the light.</p>
+            <span data-build="text" class="f-mono mt-5 block break-words text-[10px] uppercase tracking-[0.14em] text-[var(--flame)]">cubic-bezier(0.16, 1, 0.3, 1)</span>
+          </div>
+        </article>
+        <!-- Remaining 7 agents + Rule of the house injected by JS before swarm scans -->
+      </div>
+    </section>
+
+    <!-- =================================================== 03 THE REGISTRY -->
+    <section id="registry" data-build-zone class="relative mx-auto w-full max-w-[1440px] px-4 py-20 sm:px-10 sm:py-36">
+      <div class="mb-14 max-w-4xl">
+        <p data-build="text" class="f-mono flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[var(--flame)]">
+          <span class="text-[var(--muted)]">03</span>
+          <span class="h-px w-8 bg-[var(--flame)]"></span>
+          The library
+        </p>
+        <h2 class="f-display mt-8 text-4xl font-extrabold leading-[0.98] text-[var(--ink)] sm:text-6xl">
+          <span data-build="rise"><span>Nine categories.</span></span>
+          <span data-build="rise" class="f-serif font-normal italic text-[var(--flame)]"><span>183 resources. One registry.</span></span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 gap-px md:grid-cols-6 md:auto-rows-[minmax(265px,auto)]">
+        <!-- 183 Total Resources -->
+        <article data-build="box" class="cell spot flex min-h-[300px] flex-col justify-between p-7 md:col-span-2 md:row-span-2" style="--tint:#FF3D00">
+          <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">Total indexed resources</span>
+          <div>
+            <p data-build="text" class="f-display text-[clamp(4.4rem,9vw,8.2rem)] font-extrabold leading-[0.85] text-[var(--ink)]"><span class="ak-count" data-to="183">183</span></p>
+            <p data-build="text" class="mt-5 max-w-xs text-sm leading-relaxed text-[var(--muted)]">60 typefaces · 24 studio pairings · 3 fluid scales · 6 semantic colour systems · 12 motion laws · 24 micro-interactions · 8 section templates · 16 Canvas FX · 30 computational motion graphics. Resources that depend on Three.js or GSAP state so explicitly.</p>
+          </div>
+        </article>
+
+        <!-- Typography Foundry -->
+        <article data-build="box" class="cell spot flex flex-col justify-between p-7 md:col-span-4" style="--tint:#E5A93C">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">Typography foundry · 60 faces</span>
+            <span id="face-clamp" data-build="text" class="f-mono text-[10px] uppercase tracking-[0.14em] text-[var(--gold)]">clamp(2.7rem, 8vw, 7.2rem)</span>
+          </div>
+          <p id="type-specimen" data-build="text" class="f-display font-extrabold uppercase truncate py-3 text-5xl leading-none text-[var(--ink)] sm:text-7xl">Kinetik</p>
+          <div class="flex flex-wrap gap-2" id="face-buttons">
+            <button type="button" data-build="box" data-face="0" class="chip chip-on f-mono rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.14em]">Syne — Display</button>
+            <button type="button" data-build="box" data-face="1" class="chip f-mono rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.14em]">Instrument Serif — Italic</button>
+            <button type="button" data-build="box" data-face="2" class="chip f-mono rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.14em]">JetBrains Mono — Telemetry</button>
+          </div>
+        </article>
+
+        <!-- Semantic Colour Systems -->
+        <article data-build="box" class="cell spot flex flex-col justify-between gap-3 p-7 md:col-span-2" style="--tint:#00F0FF">
+          <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">6 audited colour systems</span>
+          <div class="space-y-2" id="swatch-systems"></div>
+          <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">Tap any swatch to copy hex</span>
+        </article>
+
+        <!-- Micro-Interactions -->
+        <article data-build="box" class="cell spot flex flex-col justify-between p-7 md:col-span-2" style="--tint:#10B981">
+          <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">24 micro-interactions</span>
+          <div class="grid place-items-center py-4">
+            <div class="magnetic inline-block" data-strength="0.48">
+              <button type="button" id="magnetic-demo-btn" data-build="box" class="beam rounded-full px-7 py-3.5 text-sm font-semibold text-[var(--ink)]">
+                <span class="relative">Magnetic pull ↗</span>
+              </button>
+            </div>
+          </div>
+          <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">Spring 260 / 16 · border beam</span>
+        </article>
+
+        <!-- 16 Hero Backgrounds Live 60fps Canvas Lab -->
+        <article data-build="box" class="cell relative flex min-h-[280px] flex-col justify-between gap-6 overflow-hidden p-5 md:col-span-3">
+          <canvas id="herofx-canvas" class="absolute inset-0 h-full w-full cursor-crosshair"></canvas>
+          <div class="relative z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+            <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink)] bg-[#070709]/70 px-2.5 py-1 rounded-full border border-[var(--line)]">16 hero scenes · 60 fps</span>
+            <div class="flex gap-1.5 pointer-events-auto" id="herofx-tabs">
+              <button type="button" data-fx="matrix" class="chip chip-on f-mono rounded-full px-3 py-1 text-[9.5px] uppercase tracking-wider">Dot Matrix</button>
+              <button type="button" data-fx="globe" class="chip f-mono rounded-full px-3 py-1 text-[9.5px] uppercase tracking-wider">3D Globe</button>
+              <button type="button" data-fx="beams" class="chip f-mono rounded-full px-3 py-1 text-[9.5px] uppercase tracking-wider">Beams</button>
+            </div>
+          </div>
+          <p data-build="text" class="relative z-10 pointer-events-none f-serif max-w-sm text-2xl italic leading-tight text-[var(--ink)] sm:text-3xl">Move across this cell — live 60fps canvas shaders.</p>
+        </article>
+
+        <!-- AI Ingestion llms.txt -->
+        <article data-build="box" class="cell flex min-h-[265px] flex-col justify-between gap-3 p-7 md:col-span-3">
+          <div class="flex items-center justify-between gap-2">
+            <span data-build="text" class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">AI ingestion · llms.txt</span>
+            <button type="button" id="copy-llms-btn" data-build="box" class="chip f-mono flex items-center gap-2 rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.14em]">
+              <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy spec
+            </button>
+          </div>
+          <pre data-build="text" class="f-mono overflow-hidden break-words whitespace-pre-wrap text-[11px] leading-[1.68] text-[var(--muted)]"># ATELIER KINETIK · v2.8.0
+&gt; Curated frontend reference (183 resources · 9 categories)
+
+llms.txt       orientation for AI coding agents
+registry.json  structured manifest (static JSON, no API)
+
+typefaces: 60 · pairings: 24 · scales: 3 · colour: 6
+motion laws: 12 · interactions: 24 · templates: 8
+canvas FX: 16 · motion graphics: 30 (Canvas 2D · WebGL · Three.js · GSAP)</pre>
+        </article>
+      </div>
+    </section>
+
+    <!-- =================================================== 04 LIBRARY INDEX -->
+    <section id="directory" data-build-zone class="relative mx-auto w-full max-w-[1440px] px-4 py-20 sm:px-10 sm:py-36">
+      <div class="mb-14 grid gap-8 md:grid-cols-12 md:items-end">
+        <div class="md:col-span-7">
+          <p data-build="text" class="f-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">04 · Categories</p>
+          <h2 class="f-display mt-6 text-4xl font-extrabold leading-[0.98] text-[var(--ink)] sm:text-6xl">
+            <span data-build="rise"><span>See it working,</span></span>
+            <span data-build="rise" class="f-serif italic font-normal text-[var(--flame)]"><span>read how it is built.</span></span>
+          </h2>
+        </div>
+        <p data-build="text" class="text-sm leading-relaxed text-[var(--muted)] md:col-span-5">
+          Open any category to preview live examples, inspect syntax-highlighted source with Prism.js, check dependencies and copy only the part that fits your project.
+        </p>
+      </div>
+
+      <div class="dir-list" data-build="box">
+        <button type="button" data-view="mg" class="dir-row">
+          <span class="dir-num f-mono">01</span>
+          <span class="dir-name f-display">Motion Graphics</span>
+          <span class="dir-desc">Wave caustics, Navier–Stokes fluids, WebGL SDF metaballs, RK4 chaos, Verlet soft bodies &amp; CSS linear() forge</span>
+          <span class="dir-count f-mono">30 <span class="dir-arr">→</span></span>
+        </button>
+        <button type="button" data-view="motion" class="dir-row">
+          <span class="dir-num f-mono">02</span>
+          <span class="dir-name f-display">Micro-Interactions</span>
+          <span class="dir-desc">Live, continuously animated UI primitives — springs, spotlights, drawers, ripples &amp; tabs</span>
+          <span class="dir-count f-mono">24 <span class="dir-arr">→</span></span>
+        </button>
+        <button type="button" data-view="fx" class="dir-row">
+          <span class="dir-num f-mono">03</span>
+          <span class="dir-name f-display">Canvas FX</span>
+          <span class="dir-desc">Sixteen effects rendered to canvas — fields, textures, particles and light with resize handling</span>
+          <span class="dir-count f-mono">16 <span class="dir-arr">→</span></span>
+        </button>
+        <button type="button" data-view="templates" class="dir-row">
+          <span class="dir-num f-mono">04</span>
+          <span class="dir-name f-display">Section Templates</span>
+          <span class="dir-desc">Drop-in editorial sections — hero, bento, pricing, feature split, stats, testimonials &amp; FAQ</span>
+          <span class="dir-count f-mono">08 <span class="dir-arr">→</span></span>
+        </button>
+        <button type="button" data-view="systems" class="dir-row">
+          <span class="dir-num f-mono">05</span>
+          <span class="dir-name f-display">Colour Systems</span>
+          <span class="dir-desc">Six semantic colour systems mapped to background, surface, text, border and accent roles</span>
+          <span class="dir-count f-mono">06 <span class="dir-arr">→</span></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================================================== 05 MOTION LAW -->
+    <section id="easings" data-build-zone class="relative mx-auto w-full max-w-[1440px] px-4 py-20 sm:px-10 sm:py-36">
+      <div class="mb-14 grid gap-8 md:grid-cols-12 md:items-end">
+        <div class="md:col-span-8">
+          <p data-build="text" class="f-mono flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[var(--flame)]">
+            <span class="text-[var(--muted)]">05</span>
+            <span class="h-px w-8 bg-[var(--flame)]"></span>
+            Motion · 12 laws
+          </p>
+          <h2 class="f-display mt-8 text-4xl font-extrabold leading-[0.98] text-[var(--ink)] sm:text-6xl">
+            <span data-build="rise"><span>Twelve rules</span></span>
+            <span data-build="rise" class="f-serif font-normal italic text-[var(--flame)]"><span>for how things move.</span></span>
+          </h2>
+        </div>
+        <div class="flex flex-col items-start gap-4 md:col-span-4 md:items-end">
+          <p data-build="text" class="text-base leading-relaxed text-[var(--muted)] md:text-right">Each curve races a linear bar so the difference is visible. Select any curve to copy its CSS.</p>
+          <span class="f-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted)]">Press Space on handles to replay</span>
+        </div>
+      </div>
+
+      <div id="curves-grid" class="border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7"></div>
+
+      <!-- Matter.js 2D Rigid-Body Physics Stage -->
+      <div data-build="box" class="matter-shell mt-px border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--flame)]">Physics playground · Matter.js</p>
+            <p class="mt-1 text-sm text-[var(--muted)]">Drag, throw or drop weighted token slabs. Pauses automatically when out of view.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="matter-drop-btn" class="chip f-mono rounded-full px-3.5 py-1.5 text-[10px] uppercase tracking-[0.14em]">+ Drop slab</button>
+            <button type="button" id="matter-grav-btn" class="chip f-mono rounded-full px-3.5 py-1.5 text-[10px] uppercase tracking-[0.14em]">Gravity: On</button>
+            <button type="button" id="matter-reset-btn" class="chip f-mono rounded-full px-3.5 py-1.5 text-[10px] uppercase tracking-[0.14em]">Reset</button>
+          </div>
+        </div>
+        <div id="matter-stage" class="matter-stage">
+          <canvas id="matter-canvas" aria-label="Interactive 2D rigid-body physics sandbox powered by Matter.js"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= 06 FOOTER -->
+    <footer data-build-zone class="relative mx-auto w-full max-w-[1440px] px-4 pb-10 pt-20 sm:px-10 sm:pt-36">
+      <p data-build="text" class="f-mono flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[var(--flame)]">
+        <span class="text-[var(--muted)]">06</span>
+        <span class="h-px w-8 bg-[var(--flame)]"></span>
+        183 resources · v2.8.0
+      </p>
+      <h2 class="f-display hero-title mt-8 font-extrabold text-[var(--ink)]">
+        <span data-build="rise"><span>Start with the part</span></span>
+        <span data-build="rise" class="f-serif font-normal italic text-[var(--flame)]"><span>you are stuck on.</span></span>
+      </h2>
+      <p data-build="text" class="mt-5 max-w-xl text-base leading-relaxed text-[var(--muted)]">
+        A pairing, a colour system, a timing curve, a hover state or a canvas effect. Look it up, see it run, read how it works and adapt what fits.
+      </p>
+      <div class="mt-10 flex flex-wrap items-center gap-3">
+        <div class="magnetic inline-block" data-strength="0.32">
+          <button type="button" id="footer-copy-btn" data-build="box" class="btn-flame flex items-center gap-3 rounded-full px-8 py-5 text-sm font-semibold">
+            Copy llms.txt
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17 17 7" /><path d="M7 7h10v10" />
+            </svg>
+          </button>
+        </div>
+        <div class="magnetic inline-block" data-strength="0.24">
+          <button type="button" id="footer-replay-btn" data-build="box" class="btn-ghost flex items-center gap-3 rounded-full px-8 py-5 text-sm font-semibold">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+            </svg>
+            Replay Agentic Build
+          </button>
+        </div>
+      </div>
+
+      <div data-build="line" class="mt-16 h-px w-full bg-[var(--line-strong)]"></div>
+      <p class="mt-6 max-w-3xl text-xs leading-relaxed text-[var(--muted)]">
+        Atelier Kinetik is a curated frontend reference with 183 resources in nine categories: 60 typefaces, 24 font pairings, 3 fluid type scales, 6 semantic colour systems, 12 motion laws, 24 micro-interactions, 8 section templates, 16 Canvas FX and 30 computational motion graphics. This showcase uses GSAP, Lenis, Three.js, Tone.js, Matter.js, Prism.js and Google Fonts; individual library resources state their own dependencies in <a href="registry.json" class="underline hover:text-[var(--ink)]">registry.json</a>.
+      </p>
+      <noscript>
+        <p class="mt-4 text-xs text-[var(--muted)]">Atelier Kinetik is a frontend reference with 183 resources in nine categories. Read llms.txt for orientation and registry.json for the full manifest.</p>
+      </noscript>
+      <div class="f-mono flex flex-wrap items-center justify-between gap-4 pt-6 text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">
+        <span data-build="text" class="flex items-center gap-3 text-[var(--ink)]">
+          <svg viewBox="0 0 32 32" class="h-5 w-5" aria-hidden="true">
+            <circle cx="16" cy="16" r="10.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="54 12" transform="rotate(-38 16 16)" />
+            <path d="M16 1.5v7M16 23.5v7M1.5 16h7M23.5 16h7" stroke="currentColor" stroke-width="1.6" />
+            <path d="M10.5 21.5 22 10l-4.2 8.6Z" fill="#FF3D00" />
+          </svg>
+          Atelier Kinetik · v2.8.0
+        </span>
+        <span data-build="text">MIT code · Third-party libraries &amp; fonts under their own licences</span>
+        <span data-build="box" class="flex items-center gap-2 rounded-full border border-[var(--line-strong)] px-3 py-1.5 text-[var(--ink)]">
+          <span class="live-dot"></span> Animation nominal · <span id="fps-readout">60 fps</span>
+        </span>
+      </div>
+    </footer>
+    </div><!-- /#view-home -->
+
+    <!-- ==================== VIEW 1..5: DEDICATED LIBRARY WORKSPACE ==================== -->
+    <section id="view-library" class="lib-shell relative mx-auto min-h-[100svh] w-full max-w-[1440px] px-4 pb-24 pt-24 sm:px-10 sm:pt-28" hidden aria-label="Library workspace">
+      <div class="lib-topbar">
+        <button type="button" data-view="home" class="lib-back f-mono">
+          <span aria-hidden="true">←</span> Home
+        </button>
+        <div class="lib-switcher" role="tablist" aria-label="Library sections">
+          <button type="button" role="tab" class="lib-tab f-mono" id="xr-tab-mg" aria-selected="false" aria-controls="xr-panel-mg" data-xr-tab="mg">Motion Graphics <sup>30</sup></button>
+          <button type="button" role="tab" class="lib-tab f-mono" id="xr-tab-motion" aria-selected="false" aria-controls="xr-panel-motion" data-xr-tab="motion">Micro-Interactions <sup>24</sup></button>
+          <button type="button" role="tab" class="lib-tab f-mono" id="xr-tab-fx" aria-selected="false" aria-controls="xr-panel-fx" data-xr-tab="fx">Canvas FX <sup>16</sup></button>
+          <button type="button" role="tab" class="lib-tab f-mono" id="xr-tab-templates" aria-selected="false" aria-controls="xr-panel-templates" data-xr-tab="templates">Templates <sup>08</sup></button>
+          <button type="button" role="tab" class="lib-tab f-mono" id="xr-tab-systems" aria-selected="false" aria-controls="xr-panel-systems" data-xr-tab="systems">Color Systems <sup>06</sup></button>
+        </div>
+      </div>
+
+      <div class="lib-header">
+        <p class="f-mono text-[10px] uppercase tracking-[0.22em] text-[var(--flame)]" id="lib-kicker">01 · Category</p>
+        <h1 class="f-display mt-3 text-3xl font-extrabold leading-[0.98] text-[var(--ink)] sm:text-5xl" id="lib-title">Motion graphics</h1>
+        <p class="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--muted)]" id="lib-desc">Thirty pieces in which movement is computed by simulations, solvers or shaders. Each piece lists its technique and dependencies.</p>
+      </div>
+
+      <div id="ak-explorer" class="mt-10">
+        <!-- Panel: Templates -->
+        <div class="explorer-panel" role="tabpanel" id="xr-panel-templates" aria-labelledby="xr-tab-templates" tabindex="0" hidden>
+          <div class="xr-grid" id="xr-templates"></div>
+        </div>
+
+        <!-- Panel: Canvas FX -->
+        <div class="explorer-panel" role="tabpanel" id="xr-panel-fx" aria-labelledby="xr-tab-fx" tabindex="0" hidden>
+          <div class="xr-grid xr-grid-fx" id="xr-fx"></div>
+        </div>
+
+        <!-- Panel: Motion Graphics (All 25 Open in Scrollable Feed) -->
+        <div class="explorer-panel" role="tabpanel" id="xr-panel-mg" aria-labelledby="xr-tab-mg" tabindex="0" hidden>
+          <div class="xr-mg-toolbar" role="region" aria-label="Motion Graphics global theme">
+            <div class="xr-mg-toolbar-info">
+              <span class="f-mono text-[10px] uppercase tracking-[0.2em] text-[var(--flame)]">30 Live Previews</span>
+              <span class="f-mono text-[10px] text-[var(--muted)]">Scroll to explore · auto-mounted as you scroll</span>
+            </div>
+            <div class="xr-mg-themes" role="group" aria-label="Inject theme tokens into all visible previews">
+              <span class="f-mono text-[9px] uppercase tracking-[0.18em] text-[var(--muted)]">Theme</span>
+              <button type="button" class="chip xr-mg-theme is-on f-mono rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.14em]" data-mg-theme="obsidian" aria-pressed="true">Obsidian</button>
+              <button type="button" class="chip xr-mg-theme f-mono rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.14em]" data-mg-theme="paper" aria-pressed="false">Paper</button>
+              <button type="button" class="chip xr-mg-theme f-mono rounded-full px-3 py-1.5 text-[9px] uppercase tracking-[0.14em]" data-mg-theme="aegean" aria-pressed="false">Aegean</button>
+            </div>
+          </div>
+          <div class="xr-mg-feed" id="xr-mg-feed" aria-label="All thirty computational motion graphics"></div>
+        </div>
+
+        <!-- Panel: Micro-Interactions (24 Live Looping Previews) -->
+        <div class="explorer-panel" role="tabpanel" id="xr-panel-motion" aria-labelledby="xr-tab-motion" tabindex="0" hidden>
+          <div class="xr-snippets-grid" id="xr-motion"></div>
+        </div>
+
+        <!-- Panel: Color Systems -->
+        <div class="explorer-panel" role="tabpanel" id="xr-panel-systems" aria-labelledby="xr-tab-systems" tabindex="0" hidden>
+          <div class="xr-systems">
+            <div class="xr-swatches" id="xr-swatches" role="group" aria-label="Semantic color systems"></div>
+            <div class="xr-preview" id="xr-preview">
+              <div class="xr-preview-bar">
+                <span class="xr-dot"></span><span class="xr-dot"></span><span class="xr-dot"></span>
+                <span class="xr-preview-url f-mono">atelier-kinetik / token-preview</span>
+              </div>
+              <div class="xr-preview-body">
+                <p class="xr-preview-kicker f-mono">WCAG 2.1 Audited Surface</p>
+                <h3 class="xr-preview-h f-display">Precision tokens, zero improvisation.</h3>
+                <p class="xr-preview-p">Primary ink, muted ink, hairlines and accent roles update live across light and dark modes.</p>
+                <div class="xr-preview-cta">
+                  <span class="xr-preview-btn f-mono">Primary action</span>
+                  <span class="xr-preview-ghost f-mono">Secondary</span>
+                </div>
+              </div>
+              <div class="xr-sys-foot">
+                <div id="xr-sys-meta"></div>
+                <div class="xr-actions">
+                  <button type="button" id="xr-copy-css" class="chip f-mono rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.14em]">⧉ Copy CSS</button>
+                  <button type="button" id="xr-copy-json" class="chip f-mono rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.14em]">⧉ Copy JSON</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="xr-error f-mono" id="xr-error" hidden>Could not load registry.json — open via HTTP or Vercel.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>

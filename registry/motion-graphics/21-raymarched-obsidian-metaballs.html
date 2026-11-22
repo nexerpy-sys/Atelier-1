@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 21 · Raymarched Obsidian Metaballs — sphere-traced signed distance field with polynomial smooth-min, fresnel rim light, specular key and ambient occlusion in one WebGL fragment shader. Zero dependencies. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Raymarched Obsidian Metaballs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+h1 { position:absolute; left:1.25rem; bottom:2.7rem; z-index:2; pointer-events:none; font-family:"Syne",sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:-.03em;
+  font-size:clamp(1.3rem,4.2vw,2.9rem); line-height:.95; color:var(--ink); }
+h1 span { display:block; font-family:"Instrument Serif",serif; font-style:italic; font-weight:400; text-transform:none; letter-spacing:0; color:var(--flame); }
+.hint { left:1.25rem; transform:none; }
+#fb { display:none; position:absolute; inset:0; place-items:center; color:var(--muted); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  background:radial-gradient(40vmin 40vmin at 50% 50%, color-mix(in srgb,var(--flame) 30%,transparent), transparent 70%); }
+
+/* === AK v2.2 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint {
+    font-size: 8px !important;
+    letter-spacing: 0.13em !important;
+  }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { bottom: 0.7rem !important; font-size: 7.5px !important; }
+  h1 {
+    left: 0.85rem !important;
+    right: 0.85rem !important;
+    font-size: clamp(1.1rem, 5.2vw, 1.8rem) !important;
+  }
+  .modes, .dock {
+    right: 0.85rem !important;
+    left: 0.85rem !important;
+    bottom: 0.7rem !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+  }
+  .modes button, .dock button {
+    font-size: 7.5px !important;
+    padding: 5px 9px !important;
+    letter-spacing: 0.14em !important;
+  }
+}
+
+</style></head><body>
+<p class="hud"><b>21</b>&nbsp;&nbsp;Sphere tracing · smooth-min k 0.55 · fresnel⁴ · 1 draw call</p>
+<canvas id="c" aria-label="Glossy obsidian metaballs lit by a flame rim light"></canvas>
+<div id="fb">WebGL unavailable — static fallback</div>
+<h1>Liquid<span>obsidian.</span></h1>
+<p class="hint">The nearest mass follows your pointer</p>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => {
+    const c = rgb(v);
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => {
+      if (!P.down) return;
+      P.down = false;
+      if (P.onUp) P.onUp(e);
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+(() => {
+  'use strict';
+  const cv = document.getElementById('c'), gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+  if (!gl) { document.getElementById('fb').style.display = 'grid'; return; }
+  const FS = `precision highp float;
+uniform vec2 uRes,uM;uniform float uT;uniform vec3 uBg,uA,uInk;
+float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
+float map(vec3 p){
+  float d=length(p-vec3(uM.x*1.9,uM.y*1.05,.15))-.44;
+  for(int i=0;i<5;i++){float f=float(i);
+    vec3 c=vec3(sin(uT*.55+f*1.9)*1.35,cos(uT*.43+f*2.4)*.72,sin(uT*.36+f*1.3)*.55);
+    d=smin(d,length(p-c)-(.31+.08*sin(f*3.1)),.55);}
+  return d;}
+vec3 nrm(vec3 p){vec2 e=vec2(.0025,-.0025);
+  return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));}
+void main(){
+  vec2 uv=(gl_FragCoord.xy*2.-uRes)/uRes.y;
+  vec3 ro=vec3(0.,0.,3.7),rd=normalize(vec3(uv,-2.));
+  float t=1.2,d=1.;bool hit=false;
+  for(int i=0;i<60;i++){d=map(ro+rd*t);if(d<.0025){hit=true;break;}t+=d;if(t>7.)break;}
+  float halo=exp(-3.2*max(d,0.));
+  vec3 col=uBg+uA*.11*exp(-1.6*dot(uv,uv));
+  if(hit){
+    vec3 p=ro+rd*t,n=nrm(p),l=normalize(vec3(-.55,.8,.55)),v=-rd;
+    float dif=max(dot(n,l),0.);
+    float fre=pow(1.-max(dot(n,v),0.),4.);
+    float spe=pow(max(dot(reflect(-l,n),v),0.),64.);
+    float ao=clamp(map(p+n*.3)/.3,0.,1.);
+    float under=max(dot(n,vec3(.3,-.9,.1)),0.);
+    col=mix(uBg*.55,uBg+vec3(.075),dif)*(.55+.45*ao);
+    col+=uA*(fre*1.35+under*.22*ao);
+    col+=uInk*(spe*.95+fre*.12);
+    vec3 r=reflect(rd,n);col+=uInk*.16*smoothstep(.72,.9,r.y)*smoothstep(.5,.1,abs(r.x));
+  }
+  col+=uA*.05*halo*(hit?0.:1.);
+  col+=(fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-.5)*.018;
+  gl_FragColor=vec4(col,1.);}`;
+  function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}')); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { document.getElementById('fb').style.display = 'grid'; return; }
+  gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = {}; ['uRes', 'uM', 'uT', 'uBg', 'uA', 'uInk'].forEach((n) => U[n] = gl.getUniformLocation(pr, n));
+  const set3 = (u, n) => { const c = AK.rgb(n); gl.uniform3f(u, c[0] / 255, c[1] / 255, c[2] / 255); };
+  const theme = () => { set3(U.uBg, '--bg'); set3(U.uA, '--flame'); set3(U.uInk, '--ink'); }; theme(); AK.onTheme(theme);
+  const P = AK.ptr(cv); let mx = 0, my = 0, mvx = 0, mvy = 0, scale = 1.5, slow = 0;
+  AK.loop((dt, t) => {
+    slow = dt > 0.024 ? slow + 1 : Math.max(0, slow - 1); if (slow > 30 && scale > 0.75) { scale -= 0.25; slow = 0; }
+    const cw = Math.max(1, cv.clientWidth), ch = Math.max(1, cv.clientHeight);
+    const dpr = Math.min(scale, devicePixelRatio || 1), w = Math.round(cw * dpr), h = Math.round(ch * dpr);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; gl.viewport(0, 0, w, h); }
+    const tx = P.in ? (P.x / cw * 2 - 1) : Math.sin(t * 0.4) * 0.5, ty = P.in ? -(P.y / ch * 2 - 1) : Math.cos(t * 0.53) * 0.4;
+    mvx += ((tx - mx) * 60 - mvx * 9) * dt; mvy += ((ty - my) * 60 - mvy * 9) * dt; mx += mvx * dt; my += mvy * dt;
+    gl.uniform2f(U.uRes, w, h); gl.uniform2f(U.uM, mx, my); gl.uniform1f(U.uT, t + 4);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  });
+})();
+</script></body></html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<!-- Atelier Kinetik · Motion Graphics 16 · Double Pendulum Chaos Tracer — RK4-integrated Lagrangian; three pendulums released 0.001 rad apart diverge into separate light trails. Zero dependencies. -->
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kinetik Motion — Double Pendulum Chaos Tracer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root, :root[data-theme="obsidian"] {
+  --bg: #070709;
+  --surface: #0d0d12;
+  --surface-hi: #12121a;
+  --ink: #f4f2ec;
+  --muted: #8e8d8a;
+  --line: rgba(244, 242, 236, 0.10);
+  --line-strong: rgba(244, 242, 236, 0.24);
+  --flame: #ff3d00;
+  --gold: #e5a93c;
+  --cyan: #00f0ff;
+}
+:root[data-theme="paper"] {
+  --bg: #f4f2ec;
+  --surface: #ece9e0;
+  --surface-hi: #e2dfd5;
+  --ink: #0e0e10;
+  --muted: #666560;
+  --line: rgba(14, 14, 16, 0.10);
+  --line-strong: rgba(14, 14, 16, 0.24);
+  --flame: #e03500;
+  --gold: #9a6d14;
+  --cyan: #007a8c;
+}
+:root[data-theme="aegean"] {
+  --bg: #06121a;
+  --surface: #0b1e29;
+  --surface-hi: #112a38;
+  --ink: #e6f7ff;
+  --muted: #7aa7ba;
+  --line: rgba(230, 247, 255, 0.11);
+  --line-strong: rgba(230, 247, 255, 0.25);
+  --flame: #00f0ff;
+  --gold: #e5a93c;
+  --cyan: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+canvas#c {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; touch-action: none;
+}
+.hud, .read, .hint {
+  position: absolute; z-index: 3; pointer-events: none;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); user-select: none;
+}
+.hud { top: 1rem; left: 1.25rem; }
+.hud b { color: var(--flame); font-weight: 600; }
+.read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+canvas#c { cursor:crosshair; }
+
+/* === AK v2.2 Mobile & Iframe Layout Guard === */
+.hud {
+  max-width: calc(100% - 9.5rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.read {
+  max-width: 8.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .hud, .read, .hint {
+    font-size: 8px !important;
+    letter-spacing: 0.13em !important;
+  }
+  .hud { top: 0.7rem !important; left: 0.85rem !important; max-width: calc(100% - 7.8rem) !important; }
+  .read { top: 0.7rem !important; right: 0.85rem !important; max-width: 6.8rem !important; }
+  .hint { bottom: 0.7rem !important; font-size: 7.5px !important; }
+  h1 {
+    left: 0.85rem !important;
+    right: 0.85rem !important;
+    font-size: clamp(1.1rem, 5.2vw, 1.8rem) !important;
+  }
+  .modes, .dock {
+    right: 0.85rem !important;
+    left: 0.85rem !important;
+    bottom: 0.7rem !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+  }
+  .modes button, .dock button {
+    font-size: 7.5px !important;
+    padding: 5px 9px !important;
+    letter-spacing: 0.14em !important;
+  }
+}
+
+</style></head><body>
+<p class="hud"><b>16</b>&nbsp;&nbsp;Double pendulum · RK4 · Δθ₀ = 0.001 rad</p>
+<p class="read" id="read">divergence 0.000</p>
+<canvas id="c" aria-label="Three chaotic double pendulums tracing light trails"></canvas>
+<p class="hint">Click anywhere to release from that angle</p>
+<script>
+const AK = (() => {
+  const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const themeCbs = new Set();
+  const applyTheme = (name) => {
+    if (!name) return;
+    document.documentElement.setAttribute('data-theme', name);
+    themeCbs.forEach((fn) => { try { fn(name); } catch (_) {} });
+  };
+  try {
+    const qs = new URLSearchParams(location.search).get('theme');
+    if (qs) applyTheme(qs);
+  } catch (_) {}
+  window.addEventListener('message', (e) => {
+    if (e && e.data && e.data.type === 'ak-theme' && e.data.theme) applyTheme(e.data.theme);
+  });
+
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#ffffff';
+  const rgb = (v) => {
+    const s = css(v);
+    if (s.startsWith('#')) {
+      const h = s.slice(1);
+      if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)];
+      if (h.length >= 6) return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+    const m = s.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [244, 242, 236];
+  };
+  const rgba = (v, a) => {
+    const c = rgb(v);
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  };
+  const fit = (cv) => {
+    const ctx = cv.getContext('2d');
+    const S = { ctx, W: 1, H: 1, dpr: 1 };
+    const resize = () => {
+      const r = cv.getBoundingClientRect();
+      S.W = Math.max(1, Math.round(r.width || window.innerWidth));
+      S.H = Math.max(1, Math.round(r.height || window.innerHeight));
+      S.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(S.W * S.dpr);
+      cv.height = Math.round(S.H * S.dpr);
+      ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+    };
+    resize();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(cv);
+    window.addEventListener('resize', resize, { passive: true });
+    return S;
+  };
+  const ptr = (el) => {
+    const P = { x: 0, y: 0, dx: 0, dy: 0, down: false, in: false, onDown: null, onUp: null };
+    const upd = (e) => {
+      const r = el.getBoundingClientRect();
+      const nx = e.clientX - r.left, ny = e.clientY - r.top;
+      if (P.in) { P.dx += nx - P.x; P.dy += ny - P.y; }
+      P.x = nx; P.y = ny; P.in = true;
+    };
+    el.addEventListener('pointerdown', (e) => {
+      upd(e); P.down = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      if (P.onDown) P.onDown(e);
+    });
+    el.addEventListener('pointermove', upd, { passive: true });
+    const up = (e) => {
+      if (!P.down) return;
+      P.down = false;
+      if (P.onUp) P.onUp(e);
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', () => { if (!P.down) P.in = false; });
+    return P;
+  };
+  const loop = (fn) => {
+    let raf = 0, last = 0, elapsed = 0;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (document.hidden) { last = 0; return; }
+      const raw = last ? (now - last) / 1000 : 1 / 60;
+      last = now;
+      const dt = Math.min(0.033, Math.max(0.001, raw));
+      elapsed += dt;
+      fn(dt, elapsed);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  return { RM, css, rgb, rgba, fit, ptr, loop, onTheme: (fn) => themeCbs.add(fn) };
+})();
+(() => {
+  'use strict';
+  const cv = document.getElementById('c'), S = AK.fit(cv), ctx = S.ctx, P = AK.ptr(cv), read = document.getElementById('read');
+  const G = 9.81, TRAIL = 520, COLS = ['--flame', '--gold', '--cyan'];
+  let pend = [];
+  function release(a1, a2) { pend = COLS.map((c, i) => ({ s: [a1 + i * 0.001, 0, a2 + i * 0.001, 0], c, tr: [] })); }
+  function deriv(s) {
+    const [t1, w1, t2, w2] = s, d = t1 - t2, den = 3 - Math.cos(2 * d);
+    return [w1, (-3 * G * Math.sin(t1) - G * Math.sin(t1 - 2 * t2) - 2 * Math.sin(d) * (w2 * w2 + w1 * w1 * Math.cos(d))) / den,
+            w2, (2 * Math.sin(d) * (2 * w1 * w1 + 2 * G * Math.cos(t1) + w2 * w2 * Math.cos(d))) / den];
+  }
+  const add = (s, k, h) => s.map((v, i) => v + k[i] * h);
+  function rk4(s, h) {
+    const k1 = deriv(s), k2 = deriv(add(s, k1, h / 2)), k3 = deriv(add(s, k2, h / 2)), k4 = deriv(add(s, k3, h));
+    return s.map((v, i) => v + h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+  }
+  function geom(s) {
+    const L = Math.min(S.W * 0.2, S.H * 0.22), ox = S.W / 2, oy = S.H * 0.44;
+    const x1 = ox + Math.sin(s[0]) * L, y1 = oy + Math.cos(s[0]) * L;
+    return { ox, oy, x1, y1, x2: x1 + Math.sin(s[2]) * L, y2: y1 + Math.cos(s[2]) * L, L };
+  }
+  P.onDown = () => { const g = geom(pend[0].s), a = Math.atan2(P.x - g.ox, P.y - g.oy); release(a, a + 0.9); };
+  release(2.3, 2.9);
+
+  AK.loop((dt) => {
+    const W = S.W, H = S.H; ctx.clearRect(0, 0, W, H);
+    for (const p of pend) {
+      for (let i = 0; i < 4; i++) p.s = rk4(p.s, dt * 1.35 / 4);
+      const g = geom(p.s); p.tr.push(g.x2, g.y2); if (p.tr.length > TRAIL * 2) p.tr.splice(0, 2);
+    }
+    const g0 = geom(pend[0].s);
+    ctx.strokeStyle = AK.css('--line'); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(g0.ox, g0.oy, g0.L * 2, 0, 6.283); ctx.stroke();
+    ctx.beginPath(); ctx.arc(g0.ox, g0.oy, g0.L, 0, 6.283); ctx.stroke();
+    for (let i = 0; i < 72; i++) { const a = i / 72 * 6.283, r0 = g0.L * 2, r1 = r0 + (i % 6 ? 4 : 10); ctx.beginPath(); ctx.moveTo(g0.ox + Math.cos(a) * r0, g0.oy + Math.sin(a) * r0); ctx.lineTo(g0.ox + Math.cos(a) * r1, g0.oy + Math.sin(a) * r1); ctx.stroke(); }
+    ctx.globalCompositeOperation = AK.rgb('--bg')[0] < 90 ? 'lighter' : 'source-over'; ctx.lineCap = 'round';
+    for (const p of pend) {
+      const n = p.tr.length / 2;
+      for (let i = 1; i < n; i += 1) {
+        const f = i / n; if (i % 4 !== 1 && i !== n - 1) continue;
+        const j = Math.max(0, i - 4);
+        ctx.strokeStyle = AK.rgba(p.c, f * f * 0.85); ctx.lineWidth = 0.6 + f * 2.2;
+        ctx.beginPath(); ctx.moveTo(p.tr[j * 2], p.tr[j * 2 + 1]);
+        for (let k = j + 1; k <= i; k++) ctx.lineTo(p.tr[k * 2], p.tr[k * 2 + 1]);
+        ctx.stroke();
+      }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    pend.forEach((p, i) => {
+      const g = geom(p.s);
+      ctx.strokeStyle = AK.rgba('--ink', i ? 0.25 : 0.9); ctx.lineWidth = i ? 1 : 1.5;
+      ctx.beginPath(); ctx.moveTo(g.ox, g.oy); ctx.lineTo(g.x1, g.y1); ctx.lineTo(g.x2, g.y2); ctx.stroke();
+      ctx.fillStyle = AK.css('--bg'); ctx.strokeStyle = AK.rgba('--ink', i ? 0.3 : 0.9);
+      ctx.beginPath(); ctx.arc(g.x1, g.y1, 4, 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = AK.css(p.c); ctx.beginPath(); ctx.arc(g.x2, g.y2, i ? 4 : 6.5, 0, 6.283); ctx.fill();
+    });
+    ctx.fillStyle = AK.css('--ink'); ctx.beginPath(); ctx.arc(g0.ox, g0.oy, 3, 0, 6.283); ctx.fill();
+    const a = geom(pend[0].s), b = geom(pend[2].s);
+    read.textContent = 'divergence ' + (Math.hypot(a.x2 - b.x2, a.y2 - b.y2) / a.L).toFixed(3);
+  });
+})();
+</script></body></html>
