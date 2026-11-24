@@ -76,6 +76,8 @@
   }
 }
 
+
+canvas#gl { position: absolute; inset: 0; width: 100% !important; height: 100% !important; touch-action: none; }
 </style>
 </head>
 <body>
@@ -320,6 +322,26 @@ void main() {
   } else {
     boot();
   }
+})();
+</script>
+
+<script>
+(() => {
+  const releaseAll = () => {
+    document.querySelectorAll('canvas').forEach((c) => {
+      try {
+        const gl = c.getContext('webgl2') || c.getContext('webgl');
+        gl?.getExtension('WEBGL_lose_context')?.loseContext();
+      } catch (_) {}
+    });
+  };
+  document.querySelectorAll('canvas').forEach((c) => {
+    c.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
+  });
+  window.addEventListener('pagehide', releaseAll);
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ak-dispose') releaseAll();
+  });
 })();
 </script>
 </body>

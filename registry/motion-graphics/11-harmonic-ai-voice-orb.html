@@ -71,6 +71,18 @@
   }
 }
 
+
+canvas {
+  display: block;
+  width: min(70vw, 300px) !important;
+  max-height: calc(100% - 116px) !important;
+  aspect-ratio: 420 / 380;
+  height: auto !important;
+  object-fit: contain;
+}
+@media (max-width: 560px) {
+  body { gap: 0.65rem !important; padding-top: 2.2rem; padding-bottom: 1.8rem; }
+}
 </style>
 </head>
 <body>

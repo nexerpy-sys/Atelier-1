@@ -64,7 +64,7 @@ canvas#c {
 .read { top: 1rem; right: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
 .hint { bottom: 1rem; left: 50%; transform: translateX(-50%); white-space: nowrap; }
 button:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
-body { display:grid; grid-template-columns:1fr 1.25fr; gap:0; padding:3rem 1.25rem 1.1rem; }
+body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.25fr); gap:0; padding:3rem 1.25rem 1.1rem; }
 .ctl { display:flex; flex-direction:column; justify-content:center; gap:1.05rem; padding-right:1.4rem; border-right:1px solid var(--line); min-width:0; }
 label { display:grid; grid-template-columns:1fr auto; gap:8px 10px; font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
 label output { color:var(--ink); font-variant-numeric:tabular-nums; }
@@ -149,6 +149,16 @@ input[type=range]:focus-visible { outline:1px solid var(--flame); outline-offset
   #code { font-size: 9px !important; padding: 7px 10px !important; }
 }
 
+
+body { padding: 2.8rem 1.25rem 1rem !important; }
+.plot-wrap { position: relative; flex: 1; min-height: 80px; width: 100%; }
+#plot { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
+@media (max-width: 620px) {
+  body { gap: 0.6rem !important; padding: 2.4rem 0.9rem 0.85rem !important; }
+  .ctl { gap: 0.45rem !important; }
+  .view { gap: 0.5rem !important; }
+  .plot-wrap { min-height: 68px; }
+}
 </style></head><body>
 <p class="hud"><b>24</b>&nbsp;&nbsp;x(t) = 1 − e^(−ζω₀t)(cos ω_d t + ζω₀/ω_d · sin ω_d t) → linear()</p>
 <div class="ctl">
@@ -158,7 +168,7 @@ input[type=range]:focus-visible { outline:1px solid var(--flame); outline-offset
   <p class="meta" id="meta"></p>
 </div>
 <div class="view">
-  <canvas id="plot" aria-label="Spring step-response curve"></canvas>
+  <div class="plot-wrap"><canvas id="plot" aria-label="Spring step-response curve"></canvas></div>
   <div class="lane"><div id="puck"></div></div>
   <button id="code" type="button" aria-label="Copy generated CSS transition"></button>
 </div>
@@ -281,7 +291,7 @@ const AK = (() => {
   let dir = 1;
   function play() {
     if (AK.RM || !puck.animate) return;
-    const lane = puck.parentNode.clientWidth - 24, from = dir > 0 ? 0 : lane, to = dir > 0 ? lane : 0; dir = -dir;
+    const lane = puck.parentNode.clientWidth - (puck.offsetWidth || 24), from = dir > 0 ? 0 : lane, to = dir > 0 ? lane : 0; dir = -dir;
     const frames = []; for (let i = 0; i <= 60; i++) frames.push({ transform: `translateX(${(from + (to - from) * sol.x(dur * i / 60)).toFixed(2)}px)` });
     frames[60] = { transform: `translateX(${to}px)` };
     if (anim) anim.cancel(); anim = puck.animate(frames, { duration: dur * 1000, fill: 'forwards' }); anim.onfinish = () => setTimeout(() => { if (anim && anim.playState === 'finished') play(); }, 700);

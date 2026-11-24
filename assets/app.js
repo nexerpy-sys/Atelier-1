@@ -94,7 +94,7 @@ import { mountKinetik } from './kinetik-v27.js';
       });
 
       /* ==============================================================
-         1. SHARED CLOCK BRIDGE & ADAPTIVE QUALITY ENGINE (v2.8)
+         1. SHARED CLOCK BRIDGE & ADAPTIVE QUALITY ENGINE (v2.9)
          ============================================================== */
       const subs = new Set();
       let ema = 16.7;
@@ -175,7 +175,7 @@ import { mountKinetik } from './kinetik-v27.js';
 > nine categories. It is a static reference site. It is not a website
 > generator, a chatbot, an API or a package registry.
 
-Version: 2.8.0
+Version: 2.9.1
 
 ## What this site provides
 
@@ -2581,6 +2581,7 @@ generate source code and is not an AI system. Do not describe it as one.
         }
 
         function destroyMotionGraphic() {
+          window.__akKinetik?.evictMotionGraphics?.();
           if (mgObserver) { mgObserver.disconnect(); mgObserver = null; }
           if (mgFeed) {
             mgFeed.querySelectorAll(".xr-mg-stage").forEach(unmountStageFrame);
@@ -2702,11 +2703,6 @@ generate source code and is not an AI system. Do not describe it as one.
                 const on = b.getAttribute("data-mg-theme") === t;
                 b.classList.toggle("is-on", on);
                 b.setAttribute("aria-pressed", on ? "true" : "false");
-              });
-              mgFeed.querySelectorAll("iframe.ak-mg-frame").forEach((frame) => {
-                if (frame.contentWindow) {
-                  try { frame.contentWindow.postMessage({ type: "ak-theme", theme: t }, "*"); } catch (_) {}
-                }
               });
             });
           });

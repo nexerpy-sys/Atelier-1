@@ -142,6 +142,16 @@ body { display: grid; place-items: center; perspective: 1100px; }
   .modes button { font-size: 7.5px !important; padding: 5px 9px !important; letter-spacing: 0.14em !important; }
 }
 
+
+@media (max-width: 560px) {
+  .stage h1, h1.headline {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    font-size: clamp(1.8rem, 8.5vw, 3.2rem) !important;
+  }
+}
 </style></head><body>
 <p class="hud"><b>28</b>&nbsp;&nbsp;GSAP 3.12 · timeline · split-glyph mask · quickTo 3D tilt</p>
 <p class="read" id="read">t 0.00s</p>

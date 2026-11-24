@@ -5,7 +5,7 @@
 > nine categories. It is a static reference site. It is not a website
 > generator, a chatbot, an API or a package registry.
 
-Version: 2.8.0
+Version: 2.9.1
 
 ## What this site provides
 

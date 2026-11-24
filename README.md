@@ -1,4 +1,4 @@
-# Atelier Kinetik · v2.8.0
+# Atelier Kinetik · v2.9.1
 
 Atelier Kinetik is a curated frontend reference for developers and AI coding agents: **183 design and motion resources in nine categories**, each documented with a live preview, readable source and an entry in `registry.json`.
 
@@ -39,10 +39,16 @@ Individual resources in `registry/` list their own dependencies in `registry.jso
 4. Take the smallest part needed — leave preview scaffolding behind.
 5. Keep responsive behaviour, keyboard focus states and `prefers-reduced-motion` handling intact.
 
-## Hosting (GitHub Pages & static hosts)
+## Hosting (Netlify & static hosts)
 
-This repository includes `.nojekyll` at the root and uses relative asset paths so it previews cleanly on **GitHub Pages** project subpaths (e.g. `https://<user>.github.io/Atelier-1/`) as well as root domains and Vercel.
+This repository includes `netlify.toml` and `.nojekyll` at the root and uses relative asset paths so it deploys cleanly on **Netlify** (zero build step, publish directory `.`) as well as other static hosts.
 
-## Licence
+This site is powered by [Netlify](https://www.netlify.com).
 
-Code is MIT. Typefaces (via Google Fonts) and third-party libraries (GSAP, Lenis, Three.js, Tone.js, Matter.js, Prism.js, Lucide) remain under their own licences.
+## Code of Conduct
+
+Participation in this project is governed by our [Code of Conduct](CODE_OF_CONDUCT.md) (Contributor Covenant v2.1).
+
+## License
+
+Code is released under the [MIT License](LICENSE) (OSI-approved). Typefaces (via Google Fonts) and third-party libraries (GSAP, Lenis, Three.js, Tone.js, Matter.js, Prism.js, Lucide) remain under their own licenses.

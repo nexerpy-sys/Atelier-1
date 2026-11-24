@@ -90,6 +90,19 @@
   }
 }
 
+
+#deck {
+  position: relative;
+  height: min(70%, 390px) !important;
+  width: auto !important;
+  max-width: 78vw !important;
+  aspect-ratio: 5 / 7.1;
+  perspective: 1200px;
+}
+@media (max-width: 560px) {
+  #deck { height: min(68%, 250px) !important; }
+  .card-inner { padding: 14px !important; }
+}
 </style>
 </head>
 <body>

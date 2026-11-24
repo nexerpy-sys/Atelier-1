@@ -270,4 +270,24 @@ void main(){
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   });
 })();
-</script></body></html>
+</script>
+<script>
+(() => {
+  const releaseAll = () => {
+    document.querySelectorAll('canvas').forEach((c) => {
+      try {
+        const gl = c.getContext('webgl2') || c.getContext('webgl');
+        gl?.getExtension('WEBGL_lose_context')?.loseContext();
+      } catch (_) {}
+    });
+  };
+  document.querySelectorAll('canvas').forEach((c) => {
+    c.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
+  });
+  window.addEventListener('pagehide', releaseAll);
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ak-dispose') releaseAll();
+  });
+})();
+</script>
+</body></html>

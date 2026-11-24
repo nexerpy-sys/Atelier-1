@@ -1,10 +1,10 @@
 {
   "$schema": "https://schemas.atelierkinetik.dev/registry.v1.json",
   "name": "Atelier Kinetik — Frontend Design & Motion Reference",
-  "version": "2.8.0",
+  "version": "2.9.1",
   "released": "2026-11-22",
   "license": "Code MIT · Typography OFL (per-font, via Google Fonts) · Brand marks reserved",
-  "summary": "Atelier Kinetik resource registry. Version 2.8.0. 183 frontend design and implementation resources in nine categories: 60 Google Fonts typefaces, 24 studio pairings, 3 fluid clamp() type scales, 6 semantic colour systems, 12 named motion laws, 24 production micro-interactions, 8 section templates, 16 Canvas FX and 30 computational motion graphics (Canvas 2D, WebGL, Three.js and GSAP). Static manifest; no API.",
+  "summary": "Atelier Kinetik resource registry. Version 2.9.1. 183 frontend design and implementation resources in nine categories: 60 Google Fonts typefaces, 24 studio pairings, 3 fluid clamp() type scales, 6 semantic colour systems, 12 named motion laws, 24 production micro-interactions, 8 section templates, 16 Canvas FX and 30 computational motion graphics (Canvas 2D, WebGL, Three.js and GSAP). Static manifest; no API.",
   "audience": [
     "humans in a browser",
     "AI coding agents (ChatGPT, Claude, Gemini, Manus, Kimi, Qwen, DeepSeek, Emergent)",

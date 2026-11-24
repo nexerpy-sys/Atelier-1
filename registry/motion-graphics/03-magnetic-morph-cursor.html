@@ -80,6 +80,14 @@
   }
 }
 
+
+@media (hover: none), (pointer: coarse) {
+  body, .hud, h1, button, a { cursor: auto !important; }
+  #dot, #ring { display: none !important; }
+}
+@media (max-width: 560px) {
+  body { gap: 1rem !important; }
+}
 </style>
 </head>
 <body>

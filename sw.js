@@ -1,4 +1,4 @@
-const CACHE = 'atelier-kinetik-v2.8.0';
+const CACHE = 'atelier-kinetik-v2.9.1';
 const SHELL = [
   './',
   './index.html',
@@ -38,7 +38,6 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // Never intercept cross-origin CDN requests; loader.js handles SRI + 3 s fallbacks directly.
   if (url.origin !== self.location.origin) return;
 
   const isDocOrData = req.mode === 'navigate'

@@ -142,6 +142,12 @@ html.ak-embedded [data-theme-btn] { display: none !important; }
   h1 { bottom: 3.35rem !important; }
 }
 
+
+@media (max-width: 560px) {
+  .dock { flex-wrap: nowrap !important; overflow-x: auto; max-width: calc(100% - 1.7rem); scrollbar-width: none; }
+  .dock::-webkit-scrollbar { display: none; }
+  h1 { bottom: 4.3rem !important; }
+}
 </style>
 </head>
 <body>
@@ -475,5 +481,25 @@ void main() {
       if (!RM) raf = requestAnimationFrame(tick);
     })();
   </script>
+
+<script>
+(() => {
+  const releaseAll = () => {
+    document.querySelectorAll('canvas').forEach((c) => {
+      try {
+        const gl = c.getContext('webgl2') || c.getContext('webgl');
+        gl?.getExtension('WEBGL_lose_context')?.loseContext();
+      } catch (_) {}
+    });
+  };
+  document.querySelectorAll('canvas').forEach((c) => {
+    c.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
+  });
+  window.addEventListener('pagehide', releaseAll);
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ak-dispose') releaseAll();
+  });
+})();
+</script>
 </body>
 </html>
